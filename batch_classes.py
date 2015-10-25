@@ -4,7 +4,7 @@ from subprocess import call
 import os
 
 
-def write_script(name,workdir):
+def write_script(name,workdir,header):
     myfile = open(workdir+'/split_script_'+name+'.sh','w')
     
     myfile.write(
@@ -18,21 +18,21 @@ def write_script(name,workdir):
 ##You need to set up sframe
 #$ -V 
 ##email Notification
-#$ -m sa
-#$ -M daniel.gonzalez@desy.de
+#$ -m """+header.Notification+"""
+#$ -M """+header.Mail+"""
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
 ##CPU memory
-##$ -l h_vmem=16G
+##$ -l h_vmem="""+header.RAM+"""G
 ##DISK memory
-#$ -l h_fsize=2G   
+#$ -l h_fsize="""+header.DISK+"""G   
 sframe_main """+workdir+"""/"""+name+"""_${SGE_TASK_ID}.xml
 """)
     
     myfile.close()
 
 
-def resub_script(name,workdir):
+def resub_script(name,workdir,header):
     myfile = open(workdir+'/split_script_'+name+'.sh','w')
     
     myfile.write(
@@ -62,7 +62,7 @@ sframe_main """+workdir+"""/"""+name+""".xml
 
 
 
-def submitt_qsub(NFiles,Stream,name,workdir):
+def submit_qsub(NFiles,Stream,name,workdir):
     #print '-t 1-'+str(int(NFiles))
     #call(['ls','-l'], shell=True)
 

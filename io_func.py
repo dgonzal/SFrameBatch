@@ -27,16 +27,13 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1
         # Create Element
         tempChild = doc.createElement('Library')
         root.appendChild(tempChild)
-        
         # Set Attr.
         tempChild.setAttribute( 'Name', lib)
-        
     
     for pack in Job.Packs:
         # Create Element
         tempChild = doc.createElement('Package')
         root.appendChild(tempChild)
-        
         # Set Attr.
         tempChild.setAttribute( 'Name', pack)
         
@@ -44,7 +41,6 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1
         # Create Element
         tempChild = doc.createElement('Cycle')
         root.appendChild(tempChild)
-        
         # Set Attr.
         tempChild.setAttribute( 'Name', cycle.Cyclename)
         if not os.path.exists(cycle.OutputDirectory+workdir+'/'):
@@ -65,10 +61,6 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1
             # Create Element
             InputGrandchild= doc.createElement('InputData')
             tempChild.appendChild(InputGrandchild)
-            
-            #tempChild.appendChild(cycle.Cycle_InputData[0].node)
-            #cycle.Cycle_InputData[0].node.attributes['NEventsMax'].value = str(MaxEvents)
-            #cycle.Cycle_InputData[0].node.attributes['NEventsSkip'].value = str(SkipEvents)
         
             InputGrandchild.setAttribute('Lumi', cycle.Cycle_InputData[p].Lumi)
             InputGrandchild.setAttribute('Type', cycle.Cycle_InputData[p].Type)
@@ -82,8 +74,6 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1
         
             count_i =-1
            
-
-
             for entry in cycle.Cycle_InputData[p].io_list:
                 count_i +=1
                
@@ -103,8 +93,6 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1
                         #print entry[it],entry[it+1]
                         Datachild.setAttribute(entry[it],entry[it+1])
 
-
-
             if FileSplit!=-1:
                 InputTreePos = len(cycle.Cycle_InputData[p].io_list)-2
                 InputTree = doc.createElement(cycle.Cycle_InputData[p].io_list[InputTreePos][0])
@@ -116,9 +104,7 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1
                 InputGrandchild.appendChild(OutputTree)
                 OutputTree.setAttribute(cycle.Cycle_InputData[p].io_list[OutputTreePos][1],cycle.Cycle_InputData[p].io_list[OutputTreePos][2])
 
-
         #InGrandGrandchild= doc.createElement('In')
-
         ConfigGrandchild  = doc.createElement('UserConfig')
         tempChild.appendChild(ConfigGrandchild)
 
@@ -149,20 +135,25 @@ class header(object):
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
 
             if 'ConfigSGE' in line : 
-                self.ConfigSGE = parseString(line)
-            
+                self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
+                self.RAM = self.ConfigSGE.attributes['RAM'].value
+                self.DISK = self.ConfigSGE.attributes['DISK'].value
+                self.Notification = self.ConfigSGE.attributes['Notification'].value
+                self.Mail = self.ConfigSGE.attributes['Mail'].value
+                self.Workdir = self.ConfigSGE.attributes['Workdir'].value
+
         f.close()   
 
 
 
-def write_all_xml(path,header,Job,workdir):
+def write_all_xml(path,datasetName,header,Job,workdir):
     NEventsBreak= header.NEventsBreak
     LastBreak = header.LastBreak
     FileSplit=header.FileSplit
 
     NFiles=0
 
-    Version = header.Version
+    Version =datasetName
     if Version[0] =='-1':Version =-1
 
     if NEventsBreak!=0 and LastBreak!=0:
