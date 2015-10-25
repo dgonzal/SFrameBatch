@@ -33,16 +33,16 @@ if __name__ == "__main__":
                       dest="loop",
                       default=False,
                       help="Look which jobs finished and where transfered to your storage device. Creates the missing_files.txt")
+    parser.add_option("-a", "--addFiles",
+                     action="store_false",
+                     dest="add",
+                     default=False,
+                     help="hadd files to one") 
     parser.add_option("-f", "--forceMerge",
                       action="store_false", # optional because action defaults to "store"
                       dest="forceMerge",
                       default=False,
                       help="Force to hadd the root files from the workdir into the ouput directory")
-    parser.add_option("-a", "--addFiles",
-                     action="store_false",
-                     dest="add",
-                     default=False,
-                     help="hadd all the files to one") 
     (options, args) = parser.parse_args()
 
     if len(args) != 1:
@@ -112,10 +112,10 @@ if __name__ == "__main__":
             missing.close()
             resubmit_flag = 0
             del_list.sort(reverse=True)	
-            if options.add:
+            if options.add or options.forceMerge:
                 for m in del_list:
                     nameOfCycle = cycle.Cyclename.replace('::','.')
-                    if not  os.path.exists(cycle.OutputDirectory+'/'+nameOfCycle+'.'+data_type[m]+'.root'):
+                    if not  os.path.exists(cycle.OutputDirectory+'/'+nameOfCycle+'.'+data_type[m]+'.root') or options.forceMerge:
                         add_histos(cycle.OutputDirectory,nameOfCycle+'.'+data_type[m]+'.'+names[m],NFiles[m],workdir)
                     del NFiles[m]
                     del names[m]

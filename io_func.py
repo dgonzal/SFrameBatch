@@ -129,7 +129,6 @@ class header(object):
             line = f.readline()
             if 'ConfigParse' in line:
                 self.ConfigParse = parseString(line).getElementsByTagName('ConfigParse')[0]
-                self.Version = self.ConfigParse.attributes['Version'].value.split(',')
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.LastBreak = int(self.ConfigParse.attributes['LastBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
