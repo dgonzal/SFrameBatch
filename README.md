@@ -16,7 +16,7 @@ There are some open issues and possible extensions.
 
 ## Issues 
 
--> SFrame creates jobTemp directories, don't erase them, otherwise the job fails.
+-> SFrame creates jobTemp directories, don't erase them while the jobs is running, otherwise the job fails.
 
 -> Script should be made executable from any dir, at the moment it only works if invoked with full path name
 
