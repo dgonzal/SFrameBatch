@@ -19,27 +19,27 @@ if __name__ == "__main__":
                       default="",
                       help="Overwrite the place where to store overhead")
     parser.add_option("-s", "--submit",
-                      action="store_false", # optional because action defaults to "store"
+                      action="store_true", # optional because action defaults to "store"
                       dest="submit",
                       default=False,
                       help="Submit Jobs to the grid")
     parser.add_option("-r", "--resubmit",
-                      action="store_false", # optional because action defaults to "store"
+                      action="store_true", # optional because action defaults to "store"
                       dest="resubmit",
                       default=False,
                       help="Resubmit failed Jobs from missing_files.txt")
     parser.add_option("-l", "--loopCheck",
-                      action="store_false", # optional because action defaults to "store"
+                      action="store_true", # optional because action defaults to "store"
                       dest="loop",
                       default=False,
                       help="Look which jobs finished and where transfered to your storage device. Creates the missing_files.txt")
     parser.add_option("-a", "--addFiles",
-                     action="store_false",
+                     action="store_true",
                      dest="add",
                      default=False,
                      help="hadd files to one") 
     parser.add_option("-f", "--forceMerge",
-                      action="store_false", # optional because action defaults to "store"
+                      action="store_true", # optional because action defaults to "store"
                       dest="forceMerge",
                       default=False,
                       help="Force to hadd the root files from the workdir into the ouput directory")
@@ -81,7 +81,7 @@ if __name__ == "__main__":
             data_type.append(cycle.Cycle_InputData[process].Type)
             NFiles.append(write_all_xml(workdir+'/'+cycle.Cycle_InputData[process].Version,processName,header,Job,workdir))
             write_script(processName[0],workdir,header)
-            if(options.submit):submit_qsub(NFiles[len(NFiles)-1],workdir+'/Stream_'+str(header.Version[0]),str(header.Version[0]),workdir)
+            if(options.submit):submit_qsub(NFiles[len(NFiles)-1],workdir+'/Stream_'+str(processName[0]),str(processName[0]),workdir)
             
         resubmit_flag =options.resubmit
              
