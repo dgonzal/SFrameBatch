@@ -15,8 +15,9 @@ There are some open issues and possible extensions.
 -> for more have a look at the help
 
 ## Issues 
+-> hadd with files that have no events raise warning that are persistent.
 
--> SFrame creates jobTemp directories, don't erase them while the jobs is running, otherwise the job fails.
+-> SFrame creates jobTemp directories, don't erase them while the jobs is running, otherwise the job fails. After the jobs ends succusfully they are erased anyway.
 
 -> Script should be made executable from any dir, at the moment it only works if invoked with full path name
 
