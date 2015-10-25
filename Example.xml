@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE JobConfiguration PUBLIC "" "JobConfig.dtd"[
+<!ENTITY DATA_SingleMu SYSTEM "../../../common/datasets/RunII_25ns_v1/SingleMuon_Run2015D-PromptReco-v3_MINIAOD_JSONv3.xml">
+
+]>
+
+
+<!--
+   <ConfigParse Version="1" NEventsBreak="0" LastBreak="0" FileSplit="10" />
+   <ConfigSGE RAM ="2" DISK ="2" Mail="XXXX@desy.de" Notification="as" Workdir="workdir"/>
+-->
+
+<!-- OutputLevel controls which messages are printed; set to VERBOSE or DEBUG for more verbosity, to WARNING or ERROR for less -->
+<JobConfiguration JobName="ExampleCycleJob" OutputLevel="INFO">
+    <Library Name="libSUHH2VLQToTopAndLepton"/>
+    <Package Name="SUHH2VLQToTopAndLepton.par" />
+
+    <Cycle Name="uhh2::AnalysisModuleRunner" OutputDirectory="./PreSelection_v3/" PostFix="" TargetLumi="522">
+    <!--<Cycle Name="uhh2::AnalysisModuleRunner"  RunMode="PROOF" ProofServer="lite://"  ProofWorkDir="/nfs/dust/cms/user/gonvaq/proof-wd/" ProofNodes="10" OutputDirectory="./PreSelection_v1/" PostFix="" TargetLumi="552.4" >-->
+
+      <InputData Lumi="1" NEventsMax="-1" Type="DATA" Version="SingleMuDATA" Cacheable="False">
+        &DATA_SingleMu;
+        <InputTree Name="AnalysisTree" />
+        <OutputTree Name="AnalysisTree" />
+      </InputData>
+
+
+        <UserConfig>
+            <!-- define which collections to read from the input. Only specify what you need to save I/O time -->
+            <Item Name="PrimaryVertexCollection" Value="offlineSlimmedPrimaryVertices" /> 
+            <Item Name="ElectronCollection" Value="slimmedElectronsUSER" />
+            <Item Name="MuonCollection" Value="slimmedMuonsUSER" /> 
+            <Item Name="TauCollection" Value="slimmedTaus" />
+            <Item Name="JetCollection" Value="slimmedJets" />
+	    <Item Name="GenJetCollection" Value="slimmedGenJets" />
+	    <Item Name="TopJetCollection" Value="slimmedJetsAK8_CMSTopTag" />
+            <Item Name="METName" Value="slimmedMETsNoHF" />
+            <Item Name="GenParticleCollection" Value="GenParticles" /> 
+            <Item Name="additionalBranches" Value="slimmedJetsPuppi slimmedMETs patJetsHepTopTagCHSPacked_daughters" />
+	    <Item Name="SelectionTriggerName" Value=""/>
+
+	    <Item Name="lumi_file" Value="/nfs/dust/cms/user/peiffer/NtupleWriter/Ntuples/RunII_25ns_v1/Lumifile_Cert_246908-258159_13TeV_PromptReco_Collisions15_25ns_JSON_v3.root" />
+            <Item Name="lumihists_lumi_per_bin" Value="0.2"/>
+	    <!--<Item Name="pileup_directory" Value=""/>-->
+	    <Item Name="pileup_directory_data" Value="/nfs/dust/cms/user/marchesi/PUData/MyDataPileupHistogram.root" />
+	    <Item Name="pileup_directory_50ns" Value="/nfs/dust/cms/user/peiffer/NtupleWriter/Ntuples/RunII_25ns_v1/Pileup.MC.TTbar.root"/>
+	    <Item Name="pileup_directory_25ns" Value="/nfs/dust/cms/user/peiffer/NtupleWriter/Ntuples/RunII_25ns_v1/Pileup.MC.TTbar.root"/>
+            <Item Name="AnalysisModule" Value="GenTestModule" />
+            <Item Name="TestKey" Value="TestKeyValue" />
+        </UserConfig>
+    </Cycle>
+</JobConfiguration>
