@@ -5,7 +5,7 @@ There are some open issues and possible extensions.
 
 ##How to use
 
--> dir/sframe_split.py [options] File.xml \n
+-> dir/sframe_split.py [options] File.xml
 -> This creates the xml files and the needed sh files
 -> for more have a look at the help
 
