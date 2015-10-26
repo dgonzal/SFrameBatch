@@ -49,6 +49,10 @@ if __name__ == "__main__":
         parser.error("wrong number of arguments help can be invoked with --help")
  
     xmlfile = args[0]
+
+    # softlink JobConfig.dtd into current directory
+    os.system('ln -s %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
+
     #print xmlfile, os.getcwd
     sax_parser = xml.sax.make_parser()
     xmlparsed = parse(xmlfile,sax_parser)
