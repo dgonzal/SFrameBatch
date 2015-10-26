@@ -15,7 +15,7 @@ There are some open issues and possible extensions.
 
 -> Take the ConfigParse & ConfigSGE part from the example file and add it to your xml file. It has to stay commented otherwise sframe would read it and not work
 
--> go to the directory where you run sframe from. This is not requiered by sframe_split but if you use relative paths, it will not possible to resolve them correctly and errors will be thrown
+-> Go to the directory where you run sframe from. This is not requiered by sframe_split but if you use relative paths, it will not possible to resolve them correctly and errors will be thrown
 
 -> sframe_split.py [options] File.xml
 
