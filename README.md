@@ -5,6 +5,7 @@ There are some open issues and possible extensions.
 
 ##Install
 -> git clone this repo anywhere :)
+
 -> For convenience you might have to chmod a+x sframe_split.py 
 
 ##How to use
