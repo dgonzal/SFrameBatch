@@ -30,6 +30,6 @@ There are some open issues and possible extensions.
 
 -> Documantation is missing
 
--> Only Split by File is tested other methods are implemented but at the moment not supported. E.g. other methods need to put in the number of events instead of -1. But anyway the should be way slower.
+-> Only Split by File is tested other methods are implemented but at the moment not supported. E.g. for other methods the user need to put in the number of events int the xml file instead of -1. But anyway the should be way slower.
 
 -> optparser deprecated should be changed to argparser
