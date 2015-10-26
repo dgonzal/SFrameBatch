@@ -19,7 +19,9 @@ There are some open issues and possible extensions.
 
 -> sframe_split.py [options] File.xml
 
--> This creates the xml files and the needed sh files
+-> sframe_split.py File.xml creates the xml files, the needed sh files and tells you how many jobs you going to submit
+
+-> To submit the jobs use the -s option. Pls make sure that you don't submit too many jobs 
 
 -> For more have a look at the help: sframe_split.py --help
 
