@@ -20,8 +20,6 @@ There are some open issues and possible extensions.
 ## Issues 
 -> hadd with files that have no events raise warning that are persistent, but otherwise should work.
 
--> SFrame creates jobTemp directories, don't erase them while the jobs is running, otherwise the job fails. After the jobs ends succusfully they are erased anyway.
-
 -> Code needs facelift
 
 -> Documantation is missing
