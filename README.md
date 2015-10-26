@@ -21,7 +21,7 @@ There are some open issues and possible extensions.
 
 -> This creates the xml files and the needed sh files
 
--> For more have a look at the help
+-> For more have a look at the help: sframe_split.py --help
 
 
 ## Issues 
