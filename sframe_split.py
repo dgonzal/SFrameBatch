@@ -79,6 +79,8 @@ if __name__ == "__main__":
     loop_check = options.loop
 
     for cycle in Job.Job_Cylce:
+        if cycle.OutputDirectory.startswith('./'):             
+            cycle.OutputDirectory = currentDir+cycle.OutputDirectory[1:]
         for process in range(len(cycle.Cycle_InputData)):
             processName = ([cycle.Cycle_InputData[process].Version])
             names.append(cycle.Cycle_InputData[process].Version)
