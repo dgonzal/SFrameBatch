@@ -9,7 +9,7 @@ def write_script(name,workdir,header):
     
     myfile.write(
     """#!/bin/bash
-#
+
 ##This is a simple example of a SGE batch script
 ##Use home server with scientific linux 6 
 #$ -l os=sld6 
@@ -23,10 +23,11 @@ def write_script(name,workdir,header):
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
 ##CPU memory
-##$ -l h_vmem="""+header.RAM+"""G
+#$ -l h_vmem="""+header.RAM+"""G
 ##DISK memory
 #$ -l h_fsize="""+header.DISK+"""G   
-sframe_main """+workdir+"""/"""+name+"""_${SGE_TASK_ID}.xml
+cd """+workdir+"""
+sframe_main """+name+"""_${SGE_TASK_ID}.xml
 """)
     
     myfile.close()
@@ -36,9 +37,8 @@ def resub_script(name,workdir,header):
     myfile = open(workdir+'/split_script_'+name+'.sh','w')
     
     myfile.write(
-    """#!/bin/zsh
-#
-#$ -M daniel.gonzalez@desy.de
+    """#!/bin/bash
+
 ##This is a simple example of a SGE batch script
 ##Use home server with scientific linux 6 
 #$ -l os=sld6 
@@ -47,15 +47,16 @@ def resub_script(name,workdir,header):
 ##You need to set up sframe
 #$ -V 
 ##email Notification
-#$ -m as
-#$ -M daniel.gonzalez@desy.de
+#$ -m """+header.Notification+"""
+#$ -M """+header.Mail+"""
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
 ##CPU memory
-#$ -l h_vmem=4G
+#$ -l h_vmem="""+header.RAM+"""G
 ##DISK memory
-#$ -l h_fsize=2G   
-sframe_main """+workdir+"""/"""+name+""".xml
+#$ -l h_fsize="""+header.DISK+"""G   
+cd """+workdir+"""
+sframe_main """+name+""".xml
 
 """)    
     myfile.close()
