@@ -84,8 +84,8 @@ def resubmit(Stream,name,workdir):
 
 
 def add_histos(directory, name, NFiles,workdir) :
-
-    print call(['rm '+directory+name+'.root'], shell=True)
+    print 'Merging',name
+    call(['rm '+directory+name+'.root'], shell=True)
     string =" "
 
     for i in range(NFiles):
@@ -93,6 +93,6 @@ def add_histos(directory, name, NFiles,workdir) :
         string += " "
 
     #print string
-    call(['hadd '+directory+name+'.root'+string], shell=True)
+    call(['hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
 
     
