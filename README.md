@@ -46,3 +46,5 @@ There are some open issues and possible extensions.
 -> Use https://raw.githubusercontent.com/schmitts/fhadd/master/fhadd.py 
 
 -> http://stackoverflow.com/questions/26104116/qstat-and-long-job-names retrieve names and extendet support for resubmission is job is dead 
+
+-> gui e.g. see https://github.com/wardi/urwid, it is shipped with cmssw
