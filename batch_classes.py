@@ -71,7 +71,7 @@ def submit_qsub(NFiles,Stream,name,workdir):
         os.makedirs(Stream)
         print Stream+' has been created'
  
-    print call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
 
 def resubmit(Stream,name,workdir,header):
     #print Stream ,name
@@ -80,12 +80,13 @@ def resubmit(Stream,name,workdir,header):
         os.makedirs(Stream)
         print Stream+' has been created'
  
-    print call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
 
 
 def add_histos(directory, name, NFiles,workdir) :
     print 'Merging',name
-    call(['rm '+directory+name+'.root'], shell=True)
+    if os.path.exists(directory+name+'.root'):
+        call(['rm '+directory+name+'.root'], shell=True)
     string =" "
 
     for i in range(NFiles):
