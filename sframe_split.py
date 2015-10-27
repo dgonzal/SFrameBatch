@@ -51,7 +51,7 @@ if __name__ == "__main__":
     xmlfile = args[0]
 
     # softlink JobConfig.dtd into current directory
-    os.system('ln -s %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
+    os.system('ln -sf %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
 
     #print xmlfile, os.getcwd
     sax_parser = xml.sax.make_parser()
