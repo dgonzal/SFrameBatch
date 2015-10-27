@@ -3,6 +3,9 @@
 from subprocess import call
 import os
 
+from tree_checker import *
+
+
 
 def write_script(name,workdir,header):
     myfile = open(workdir+'/split_script_'+name+'.sh','w')
@@ -83,17 +86,21 @@ def resubmit(Stream,name,workdir,header):
     call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
 
 
-def add_histos(directory, name, NFiles,workdir) :
+def add_histos(directory, name,NFiles,workdir,outputTree) :
     print 'Merging',name
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
 
     for i in range(NFiles):
+        if(outputTree):
+            if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
+                continue
         string += directory+workdir+'/'+name+'_'+str(i)+'.root'
         string += " "
 
     #print string
-    call(['hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
+    if not string.isspace():
+        call(['hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
 
     

@@ -124,15 +124,19 @@ if __name__ == "__main__":
                     del_list.append(i)
                 i+=1
 
-
             missing.close()
             resubmit_flag = 0
             del_list.sort(reverse=True)	
             if options.add or options.forceMerge:
+                OutputTreeName = ""
+                for inputObj in cycle.Cycle_InputData:
+                    for mylist in inputObj.io_list:
+                        if "OutputTree" in mylist:
+                           OutputTreeName= mylist[2]
                 for m in del_list:
                     nameOfCycle = cycle.Cyclename.replace('::','.')
                     if not  os.path.exists(cycle.OutputDirectory+'/'+nameOfCycle+'.'+data_type[m]+'.'+names[m]+'.root') or options.forceMerge:
-                        add_histos(cycle.OutputDirectory,nameOfCycle+'.'+data_type[m]+'.'+names[m],NFiles[m],workdir)
+                            add_histos(cycle.OutputDirectory,nameOfCycle+'.'+data_type[m]+'.'+names[m],NFiles[m],workdir,OutputTreeName)
                     del NFiles[m]
                     del names[m]
                     del data_type[m]
