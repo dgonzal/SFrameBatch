@@ -107,7 +107,7 @@ if __name__ == "__main__":
                         rootCounter +=1 
                     else:
                         missing.write(workdir+'/'+nameOfCycle+'.'+data_type[i]+'.'+names[i]+'_'+str(it)+'.root\n')
-                        if resubmit_flag: resubmit(workdir+'/Stream_'+names[i],names[i]+'_'+str(it+1),workdir)
+                        if resubmit_flag: resubmit(workdir+'/Stream_'+names[i],names[i]+'_'+str(it+1),workdir,header)
                 tot_prog += rootCounter
                 print names[i]+': ', rootCounter, NFiles[i], round(float(rootCounter)/float(NFiles[i]),3)
                 if NFiles[i] == rootCounter: 
