@@ -12,12 +12,13 @@ import xml.sax
 
 import math
 import time
+import ROOT
 
 #my classes
 from Inf_Classes import *
 from batch_classes import *
 
-def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile =None, FileSplit=-1,workdir="workdir"):
+def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,workdir="workdir"):
     doc = Document()
     root = doc.createElement("JobConfiguration")
     root.setAttribute( 'JobName', Job.JobName)
@@ -130,7 +131,6 @@ class header(object):
             if 'ConfigParse' in line:
                 self.ConfigParse = parseString(line).getElementsByTagName('ConfigParse')[0]
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
-                self.LastBreak = int(self.ConfigParse.attributes['LastBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
 
             if 'ConfigSGE' in line : 
@@ -145,9 +145,22 @@ class header(object):
 
 
 
+def get_number_of_events(Job, Version):
+    InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
+    input_files = filter(lambda s: s.endswith('.root'), (s for elem in InputData.io_list for s in elem))
+
+    NEvents = 0
+    for fname in input_files:
+        f = ROOT.TFile(fname)
+        NEvents += f.Get('AnalysisTree').GetEntriesFast()
+        f.Close()
+
+    return NEvents
+
+
+
 def write_all_xml(path,datasetName,header,Job,workdir):
     NEventsBreak= header.NEventsBreak
-    LastBreak = header.LastBreak
     FileSplit=header.FileSplit
 
     NFiles=0
@@ -155,16 +168,19 @@ def write_all_xml(path,datasetName,header,Job,workdir):
     Version =datasetName
     if Version[0] =='-1':Version =-1
 
-    if NEventsBreak!=0 and LastBreak!=0:
-        NFiles=int(math.ceil(LastBreak/NEventsBreak)+1)
-        for i in range(int(math.ceil(LastBreak/NEventsBreak)+1)):
+    if NEventsBreak!=0 and FileSplit==0:
+        NEvents = get_number_of_events(Job, Version)
+        print '%s: %i events' % (Version[0], NEvents)
+        NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
+
+        for i in xrange(10**10):
+            if i*NEventsBreak >= NEvents:
+                break
+
             outfile = open(path+'_'+str(i+1)+'.xml','w+')
             for line in header.header:
                 outfile.write(line)
-            if((i+1)*NEventsBreak < LastBreak):
-                outfile.write(write_job(Job,Version,i*NEventsBreak,NEventsBreak,i,workdir))
-            if((i+1)*NEventsBreak >= LastBreak):
-                outfile.write(write_job(Job,Version,i*NEventsBreak,NEventsBreak-(i+1)*NEventsBreak+LastBreak,i,workdir))
+            outfile.write(write_job(Job,Version,i*NEventsBreak,NEventsBreak,i,-1,workdir))
             outfile.close()
  
     elif FileSplit!=0:

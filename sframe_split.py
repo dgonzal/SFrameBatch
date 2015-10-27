@@ -119,7 +119,7 @@ if __name__ == "__main__":
                         missing.write(workdir+'/'+nameOfCycle+'.'+data_type[i]+'.'+names[i]+'_'+str(it)+'.root\n')
                         if resubmit_flag: resubmit(workdir+'/Stream_'+names[i],names[i]+'_'+str(it+1),workdir,header)
                 tot_prog += rootCounter
-                print names[i]+': ', rootCounter, NFiles[i], round(float(rootCounter)/float(NFiles[i]),3)
+                print '%30s: %4i %4i %.3f'% (names[i], rootCounter, NFiles[i], rootCounter/float(NFiles[i])), 'Done' if rootCounter == NFiles[i] else ''
                 if NFiles[i] == rootCounter: 
                     del_list.append(i)
                 i+=1
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
 
             #print 'Total progress', tot_prog
-            print '------------------------------------------------------'
+            print '-'*80
             if options.loop: time.sleep(30)
             if len(NFiles)==0: loop_check = False 
     
