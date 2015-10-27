@@ -38,3 +38,8 @@ There are some open issues and possible extensions.
 -> Only Split by File is tested other methods are implemented but at the moment not supported. E.g. for other methods the user need to put in the number of events int the xml file instead of -1. But anyway the should be way slower.
 
 -> optparser deprecated should be changed to argparser
+
+## Extensions & improvements
+
+-> Use https://raw.githubusercontent.com/schmitts/fhadd/master/fhadd.py 
+
