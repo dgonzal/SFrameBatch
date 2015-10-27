@@ -55,10 +55,10 @@ if __name__ == "__main__":
     xmlfile = args[0]
 
     # softlink JobConfig.dtd into current directory
-    os.system('ln -sf %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
+    if not os.path.exists('JobConfig.dtd'):
+        os.system('ln -sf %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
 
     #print xmlfile, os.getcwd
-
     proc_xmllint = subprocess.Popen(['xmllint','--noent',xmlfile],stdout=subprocess.PIPE)
     xmlfile_strio = StringIO.StringIO(proc_xmllint.communicate()[0])
 
