@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
             #print 'Total progress', tot_prog
             print '------------------------------------------------------'
-            time.sleep(30)
+            if options.loop: time.sleep(30)
             if len(NFiles)==0: loop_check = False 
     
     filesum =0
