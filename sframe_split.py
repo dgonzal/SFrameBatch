@@ -8,6 +8,8 @@ import os
 import sys
 import shutil
 import timeit
+import StringIO
+import subprocess
 
 from io_func import *
 
@@ -53,11 +55,15 @@ if __name__ == "__main__":
     xmlfile = args[0]
 
     # softlink JobConfig.dtd into current directory
-    os.system('ln -s %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
+    os.system('ln -sf %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
 
     #print xmlfile, os.getcwd
+
+    proc_xmllint = subprocess.Popen(['xmllint','--noent',xmlfile],stdout=subprocess.PIPE)
+    xmlfile_strio = StringIO.StringIO(proc_xmllint.communicate()[0])
+
     sax_parser = xml.sax.make_parser()
-    xmlparsed = parse(xmlfile,sax_parser)
+    xmlparsed = parse(xmlfile_strio,sax_parser)
     header = header(xmlfile)
         
     node = xmlparsed.getElementsByTagName('JobConfiguration')[0]
