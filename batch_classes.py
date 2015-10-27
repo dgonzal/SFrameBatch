@@ -73,9 +73,9 @@ def submit_qsub(NFiles,Stream,name,workdir):
  
     print call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
 
-def resubmit(Stream,name,workdir):
+def resubmit(Stream,name,workdir,header):
     #print Stream ,name
-    resub_script(name,workdir)	
+    resub_script(name,workdir,header)	
     if not os.path.exists(Stream):
         os.makedirs(Stream)
         print Stream+' has been created'

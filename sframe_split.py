@@ -76,8 +76,7 @@ if __name__ == "__main__":
     names =[]
     data_type =[]
     NFiles = []
-    loop_check = options.loop
-
+    
     for cycle in Job.Job_Cylce:
         if cycle.OutputDirectory.startswith('./'):             
             cycle.OutputDirectory = currentDir+cycle.OutputDirectory[1:]
@@ -89,11 +88,13 @@ if __name__ == "__main__":
             write_script(processName[0],workdir,header)
             if(options.submit):submit_qsub(NFiles[len(NFiles)-1],workdir+'/Stream_'+str(processName[0]),str(processName[0]),workdir)
             
+        #get once into the loop for resubmission
+        loop_check = True #options.loop
         resubmit_flag =options.resubmit
              
         while loop_check==True:   
-            if len(names)==0: 
-                loop_check = False 
+            if len(names)==0 or not options.loop: 
+                loop_check = False
             del_list =[]    
             tot_prog = 0
             missing = open(workdir+'/missing_files.txt','w+')
@@ -107,7 +108,7 @@ if __name__ == "__main__":
                         rootCounter +=1 
                     else:
                         missing.write(workdir+'/'+nameOfCycle+'.'+data_type[i]+'.'+names[i]+'_'+str(it)+'.root\n')
-                        if resubmit_flag: resubmit(workdir+'/Stream_'+names[i],names[i]+'_'+str(it+1),workdir)
+                        if resubmit_flag: resubmit(workdir+'/Stream_'+names[i],names[i]+'_'+str(it+1),workdir,header)
                 tot_prog += rootCounter
                 print names[i]+': ', rootCounter, NFiles[i], round(float(rootCounter)/float(NFiles[i]),3)
                 if NFiles[i] == rootCounter: 
