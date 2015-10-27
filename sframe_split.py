@@ -7,6 +7,7 @@ import xml.sax
 import os
 import sys
 import shutil
+import timeit
 
 from io_func import *
 
@@ -45,6 +46,7 @@ if __name__ == "__main__":
                       help="Force to hadd the root files from the workdir into the ouput directory")
     (options, args) = parser.parse_args()
 
+    start = timeit.default_timer()
     if len(args) != 1:
         parser.error("wrong number of arguments help can be invoked with --help")
  
@@ -122,7 +124,7 @@ if __name__ == "__main__":
             if options.add or options.forceMerge:
                 for m in del_list:
                     nameOfCycle = cycle.Cyclename.replace('::','.')
-                    if not  os.path.exists(cycle.OutputDirectory+'/'+nameOfCycle+'.'+data_type[m]+'.root') or options.forceMerge:
+                    if not  os.path.exists(cycle.OutputDirectory+'/'+nameOfCycle+'.'+data_type[m]+'.'+names[m]+'.root') or options.forceMerge:
                         add_histos(cycle.OutputDirectory,nameOfCycle+'.'+data_type[m]+'.'+names[m],NFiles[m],workdir)
                     del NFiles[m]
                     del names[m]
@@ -138,3 +140,7 @@ if __name__ == "__main__":
     for i in NFiles:
         filesum+=i
     print "Number of xml Files",filesum
+
+    stop = timeit.default_timer()
+
+    print "Program was running for",round(stop - start,2),"sec" 
