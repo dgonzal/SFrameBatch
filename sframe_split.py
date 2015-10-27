@@ -55,8 +55,9 @@ if __name__ == "__main__":
     xmlfile = args[0]
 
     # softlink JobConfig.dtd into current directory
+    scriptpath = os.path.realpath(__file__)[:-15]
     if not os.path.exists('JobConfig.dtd'):
-        os.system('ln -sf %s/JobConfig.dtd .' % os.path.dirname(xmlfile))
+        os.system('ln -sf %s/JobConfig.dtd .' % scriptpath)
 
     #print xmlfile, os.getcwd
     proc_xmllint = subprocess.Popen(['xmllint','--noent',xmlfile],stdout=subprocess.PIPE)
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     if options.workdir : workdir = options.workdir
     if not workdir : workdir="workdir"
     currentDir = os.getcwd()
-    scriptpath = os.path.realpath(__file__)[:-15]
+   
     if not os.path.exists(workdir+'/'):
         os.makedirs(workdir+'/')
         print workdir,'has been created'
