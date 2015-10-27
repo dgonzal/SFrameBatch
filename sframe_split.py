@@ -150,7 +150,8 @@ if __name__ == "__main__":
     filesum =0
     for i in NFiles:
         filesum+=i
-    print "Number of xml Files",filesum
+    if filesum!=0:
+        print "Number of xml Files",filesum
 
     stop = timeit.default_timer()
 
