@@ -9,6 +9,8 @@ There are some open issues and possible extensions.
 -> For convenience you might have to chmod a+x sframe_split.py 
 
 ##How to use
+-> SFrame creates jobTemp_* directories where you start this script. Take care to have enough disk space.
+
 -> Setup sframe & cmssw for a 2.7 python version 
 
 -> export PATH=$PATH:/DirToScript/parallel/ 
