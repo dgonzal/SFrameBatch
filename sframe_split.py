@@ -10,7 +10,9 @@ import shutil
 import timeit
 import StringIO
 import subprocess
+import multiprocessing
 
+from hadd_helper import *
 from io_func import *
 
 if __name__ == "__main__":
@@ -46,7 +48,17 @@ if __name__ == "__main__":
                       dest="forceMerge",
                       default=False,
                       help="Force to hadd the root files from the workdir into the ouput directory")
+"""
+    parser.add_option("-m","--multiMerge",
+                      action="store",
+                      dest="worker",
+                      type=float,
+                      default=0.3,
+                      help="Define how many multiple processes are used to hadd the files. Combination with -a or -f needed. Default is to use 30% of the available workers.")
+"""
     (options, args) = parser.parse_args()
+    #print options
+    #print args
 
     start = timeit.default_timer()
     if len(args) != 1:
@@ -85,7 +97,7 @@ if __name__ == "__main__":
     names =[]
     data_type =[]
     NFiles = []
-    
+
     for cycle in Job.Job_Cylce:
         if cycle.OutputDirectory.startswith('./'):             
             cycle.OutputDirectory = currentDir+cycle.OutputDirectory[1:]
@@ -101,6 +113,8 @@ if __name__ == "__main__":
         loop_check = True #options.loop
         resubmit_flag =options.resubmit
              
+        print '%30s: %6s %6s %.6s'% ('Sample Name','#Files','Ready','[%]')
+
         while loop_check==True:   
             if len(names)==0 or not options.loop: 
                 loop_check = False
@@ -119,7 +133,7 @@ if __name__ == "__main__":
                         missing.write(workdir+'/'+nameOfCycle+'.'+data_type[i]+'.'+names[i]+'_'+str(it)+'.root\n')
                         if resubmit_flag: resubmit(workdir+'/Stream_'+names[i],names[i]+'_'+str(it+1),workdir,header)
                 tot_prog += rootCounter
-                print '%30s: %4i %4i %.3f'% (names[i], rootCounter, NFiles[i], rootCounter/float(NFiles[i])), 'Done' if rootCounter == NFiles[i] else ''
+                print '%30s: %6i %6i %.3i'% (names[i], rootCounter, NFiles[i], 100*rootCounter/float(NFiles[i])), 'Done' if rootCounter == NFiles[i] else ''
                 if NFiles[i] == rootCounter: 
                     del_list.append(i)
                 i+=1
@@ -136,17 +150,16 @@ if __name__ == "__main__":
                 for m in del_list:
                     nameOfCycle = cycle.Cyclename.replace('::','.')
                     if not  os.path.exists(cycle.OutputDirectory+'/'+nameOfCycle+'.'+data_type[m]+'.'+names[m]+'.root') or options.forceMerge:
-                            add_histos(cycle.OutputDirectory,nameOfCycle+'.'+data_type[m]+'.'+names[m],NFiles[m],workdir,OutputTreeName)
+                        add_histos(cycle.OutputDirectory,nameOfCycle+'.'+data_type[m]+'.'+names[m],NFiles[m],workdir,OutputTreeName)
                     del NFiles[m]
                     del names[m]
                     del data_type[m]
-
 
             #print 'Total progress', tot_prog
             print '-'*80
             if options.loop: time.sleep(30)
             if len(NFiles)==0: loop_check = False 
-    
+                        
     filesum =0
     for i in NFiles:
         filesum+=i

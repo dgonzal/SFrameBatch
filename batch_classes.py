@@ -4,7 +4,7 @@ from subprocess import call
 import os
 
 from tree_checker import *
-
+from fhadd import fhadd
 
 
 def write_script(name,workdir,header):
@@ -86,21 +86,24 @@ def resubmit(Stream,name,workdir,header):
     call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
 
 
-def add_histos(directory, name,NFiles,workdir,outputTree) :
-    print 'Merging',name
+def add_histos(directory,name,NFiles,workdir,outputTree) :
+    print 'Merging',name+'.root'
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
-
+    fileContainer=[]
     for i in range(NFiles):
         if(outputTree):
             if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
                 continue
         string += directory+workdir+'/'+name+'_'+str(i)+'.root'
         string += " "
+        fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
 
     #print string
     if not string.isspace():
+        #fhadd(directory+name+'.root',fileContainer,"TH1")
         call(['hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
-
-    
+    else:
+        print 'Nothing to merge'
+    #return 0
