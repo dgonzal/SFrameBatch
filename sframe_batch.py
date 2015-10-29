@@ -48,14 +48,14 @@ if __name__ == "__main__":
                       dest="forceMerge",
                       default=False,
                       help="Force to hadd the root files from the workdir into the ouput directory")
-"""
+    """
     parser.add_option("-m","--multiMerge",
                       action="store",
                       dest="worker",
                       type=float,
                       default=0.3,
                       help="Define how many multiple processes are used to hadd the files. Combination with -a or -f needed. Default is to use 30% of the available workers.")
-"""
+    """
     (options, args) = parser.parse_args()
     #print options
     #print args
