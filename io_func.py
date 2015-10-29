@@ -184,8 +184,8 @@ def write_all_xml(path,datasetName,header,Job,workdir):
             outfile.close()
  
     elif FileSplit!=0:
-        print 'Splitting job by files'
         for entry in Version:
+            print 'Splitting job by files',entry
             for cycle in Job.Job_Cylce:
                 for p in range(len(cycle.Cycle_InputData)):
                     if(cycle.Cycle_InputData[p].Version==entry) or Version ==-1:
