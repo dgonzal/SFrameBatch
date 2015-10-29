@@ -1,4 +1,4 @@
-# SFrame Split
+# SFrame Batch
 
 This is a small script to split the SFrame xml files and send the jobs to the naf with qsub.
 There are some open issues and possible extensions.
@@ -19,13 +19,13 @@ There are some open issues and possible extensions.
 
 -> Go to the directory where you run sframe from. This is not requiered by sframe_split but if you use relative paths, it will not be possible to resolve them correctly and errors will be thrown.
 
--> sframe_split.py [options] File.xml
+-> sframe_batch.py [options] File.xml
 
--> sframe_split.py File.xml creates the xml files, the needed sh files and tells you how many jobs you are going to submit
+-> sframe_batch.py File.xml creates the xml files, the needed sh files and tells you how many jobs you are going to submit
 
 -> To submit the jobs use the -s option. Pls make sure that you don't submit too many jobs 
 
--> For more have a look at the help: sframe_split.py --help
+-> For more have a look at the help: sframe_batch.py --help
 
 -> Split by file and by events is in. For split by events all the files need to be opend.
 
