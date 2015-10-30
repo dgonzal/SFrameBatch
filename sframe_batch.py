@@ -114,7 +114,16 @@ if __name__ == "__main__":
         #get once into the loop for resubmission
         loop_check = True #options.loop
         resubmit_flag =options.resubmit
-             
+
+        if resubmit_flag:
+            proc_qstat = subprocess.Popen(['qstat'],stdout=subprocess.PIPE)
+            qstat_out = proc_qstat.communicate()[0]
+            if qstat_out:
+                print '\n' + qstat_out
+                res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
+                if res.lower() != 'y':
+                    exit(0)
+
         print '%30s: %6s %6s %.6s'% ('Sample Name','#Files','Ready','[%]')
 
         while loop_check==True:   
