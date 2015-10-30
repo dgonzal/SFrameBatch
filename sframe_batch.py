@@ -65,6 +65,8 @@ if __name__ == "__main__":
         parser.error("wrong number of arguments help can be invoked with --help")
  
     xmlfile = args[0]
+    if os.path.islink(xmlfile):
+        xmlfile = os.path.abspath(os.readlink(xmlfile))
 
     # softlink JobConfig.dtd into current directory
     scriptpath = os.path.realpath(__file__)[:-15]
