@@ -4,7 +4,10 @@ from subprocess import call
 import os
 
 from tree_checker import *
-from fhadd import fhadd
+try:
+    from fhadd import fhadd
+except ImportError:
+    fhadd = None
 
 
 def write_script(name,workdir,header):
@@ -102,7 +105,10 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
 
     #print string
     if not string.isspace():
-        #fhadd(directory+name+'.root',fileContainer,"TH1")
+        #if fhadd:
+        #    fhadd(directory+name+'.root',fileContainer,"TH1")
+        #else:
+        #    call(...)
         call(['hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
     else:
         print 'Nothing to merge'
