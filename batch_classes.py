@@ -92,13 +92,13 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
     fileContainer=[]
-    for i in range(NFiles):
-        if(outputTree):
-            if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
-                continue
-        string += directory+workdir+'/'+name+'_'+str(i)+'.root'
-        string += " "
-        fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
+    #for i in range(NFiles):
+    #    if(outputTree):
+    #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
+    #            continue
+    string += directory+workdir+'/'+name+'_'+str(i)+'.root'
+    string += " "
+    fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
 
     #print string
     if not string.isspace():
