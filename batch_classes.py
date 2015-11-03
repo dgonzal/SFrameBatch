@@ -5,7 +5,7 @@ from subprocess import Popen
 import os
 
 from tree_checker import *
-# from fhadd import fhadd
+from fhadd import fhadd
 
 
 def write_script(name,workdir,header):
@@ -88,19 +88,18 @@ def resubmit(Stream,name,workdir,header):
 
 
 def add_histos(directory,name,NFiles,workdir,outputTree) :
-    
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
     fileContainer=[]
     proc = None
-    #for i in range(NFiles):
+    for i in range(NFiles):
     #    if(outputTree):
     #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
     #            continue
-    string += directory+workdir+'/'+name+'_'+str(i)+'.root'
-    string += " "
-    fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
+        string += directory+workdir+'/'+name+'_'+str(i)+'.root'
+        string += " "
+        fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
 
     #print string
     if not string.isspace():
