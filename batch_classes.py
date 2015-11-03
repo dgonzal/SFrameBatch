@@ -92,7 +92,7 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
     fileContainer=[]
-    #for i in range(NFiles):
+    for i in range(NFiles):
     #    if(outputTree):
     #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
     #            continue
