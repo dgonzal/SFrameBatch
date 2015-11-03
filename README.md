@@ -13,7 +13,7 @@ There are some open issues and possible extensions.
 
 -> Setup sframe & cmssw for a 2.7 python version 
 
--> export PATH=$PATH:/DirToScript/parallel/ 
+-> export PATH=$PATH:/DirToScript/SFrameBatch/ 
 
 -> Take the ConfigParse & ConfigSGE part from the example file and add it to your xml file. It has to stay commented at the beginnign of the file otherwise sframe would read it and not work.
 
