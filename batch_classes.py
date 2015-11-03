@@ -96,9 +96,9 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
     #    if(outputTree):
     #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
     #            continue
-    string += directory+workdir+'/'+name+'_'+str(i)+'.root'
-    string += " "
-    fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
+        string += directory+workdir+'/'+name+'_'+str(i)+'.root'
+        string += " "
+        fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
 
     #print string
     if not string.isspace():
