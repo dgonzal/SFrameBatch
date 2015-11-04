@@ -5,7 +5,7 @@ from subprocess import Popen
 import os
 
 from tree_checker import *
-from fhadd import fhadd
+#from fhadd import fhadd
 
 
 def write_script(name,workdir,header):
