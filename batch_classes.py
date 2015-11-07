@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 from subprocess import call
+from subprocess import Popen
 import os
 
 from tree_checker import *
-# from fhadd import fhadd
+#from fhadd import fhadd
 
 
 def write_script(name,workdir,header):
@@ -87,11 +88,11 @@ def resubmit(Stream,name,workdir,header):
 
 
 def add_histos(directory,name,NFiles,workdir,outputTree) :
-    print 'Merging',name+'.root'
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
     fileContainer=[]
+    proc = None
     for i in range(NFiles):
     #    if(outputTree):
     #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
@@ -103,7 +104,8 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
     #print string
     if not string.isspace():
         #fhadd(directory+name+'.root',fileContainer,"TH1")
-        call(['hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
+        print 'Merging',name+'.root'
+        proc = Popen(['nice -n 10 hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
     else:
-        print 'Nothing to merge'
-    #return 0
+        print 'Nothing to merge for',name+'.root'
+    return proc 

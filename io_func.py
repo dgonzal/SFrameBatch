@@ -18,7 +18,7 @@ import ROOT
 from Inf_Classes import *
 from batch_classes import *
 
-def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,workdir="workdir"):
+def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,workdir="workdir",LumiWeight=1):
     doc = Document()
     root = doc.createElement("JobConfiguration")
     root.setAttribute( 'JobName', Job.JobName)
@@ -62,11 +62,11 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
             # Create Element
             InputGrandchild= doc.createElement('InputData')
             tempChild.appendChild(InputGrandchild)
-        
-            InputGrandchild.setAttribute('Lumi', cycle.Cycle_InputData[p].Lumi)
+            
+            InputGrandchild.setAttribute('Lumi', str(float(cycle.Cycle_InputData[p].Lumi)*LumiWeight))
             InputGrandchild.setAttribute('Type', cycle.Cycle_InputData[p].Type)
             InputGrandchild.setAttribute('Version', cycle.Cycle_InputData[p].Version)
-            if FileSplit!=-1 and 1 == 1:
+            if FileSplit!=-1:
                 InputGrandchild.setAttribute('Cacheable', 'False')
             else:
                 InputGrandchild.setAttribute('Cacheable', cycle.Cycle_InputData[p].Cacheable)
@@ -133,7 +133,7 @@ class header(object):
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
 
-            if 'ConfigSGE' in line : 
+            if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value
                 self.DISK = self.ConfigSGE.attributes['DISK'].value
@@ -172,15 +172,19 @@ def write_all_xml(path,datasetName,header,Job,workdir):
         NEvents = get_number_of_events(Job, Version)
         print '%s: %i events' % (Version[0], NEvents)
         NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
+        SkipEvents = NEventsBreak
+        MaxEvents = NEventsBreak
 
-        for i in xrange(10**10):
-            if i*NEventsBreak >= NEvents:
-                break
-
+        for i in xrange(NFiles):
+            if i*SkipEvents >= NEvents:
+                break 
+            if (i+1)*MaxEvents >= NEvents:
+                MaxEvents = NEvents-i*SkipEvents
+            LumiWeight = float(NEvents)/float(MaxEvents)
             outfile = open(path+'_'+str(i+1)+'.xml','w+')
             for line in header.header:
                 outfile.write(line)
-            outfile.write(write_job(Job,Version,i*NEventsBreak,NEventsBreak,i,-1,workdir))
+            outfile.write(write_job(Job,Version,i*SkipEvents,MaxEvents,i,-1,workdir,LumiWeight))
             outfile.close()
  
     elif FileSplit!=0:
