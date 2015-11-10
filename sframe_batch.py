@@ -105,7 +105,10 @@ if __name__ == "__main__":
             manager.merge_files(cycle.OutputDirectory,nameOfCycle,cycle.Cycle_InputData)
             manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
             if not manager.subInfo: break
-            if options.loop: time.sleep(30)
+            if options.loop: 
+                time.sleep(30)
+                manager.print_status()
+                print '='*80
         #print 'Total progress', tot_prog
         manager.merge_wait()
         manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
