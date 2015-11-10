@@ -23,9 +23,8 @@ class JobConfig(object):
             self.Job_Cylce.append(Cycle(item))
 
 class Cycle(object):
-
-    def __init__(self,node):
-       
+    def __init__(self,node):       
+        self.cacheData = 0
         for item in node.attributes.items():
             if(item[0]=='Name'): self.Cyclename = item[1]
             #if(item[0]=='RunMode'):  self.RunMode = item[1]
@@ -37,8 +36,9 @@ class Cycle(object):
         
         self.Cycle_InputData =[]
         for item in node.getElementsByTagName('InputData'):
-            self.Cycle_InputData.append(InputData(item))
-        
+            self.Cycle_InputData.append(InputData(item,self.cacheData))
+            if self.Cycle_InputData[-1].Cacheable=='True': self.cacheData = True
+
         self.Cycle_UserConf = []
         for child in node.getElementsByTagName('UserConfig'):
             for item in child.getElementsByTagName('Item'):
@@ -52,14 +52,20 @@ class Cycle(object):
         #print self.Cycle_UserConf
 
 class InputData(object):
-    def __init__(self,node):
+    def __init__(self,node,cacheMe):
         self.NEventsSkip = 0        
         for item in node.attributes.items():
             if(item[0]=='Lumi'): self.Lumi = item[1]
             if(item[0]=='NEventsMax'): self.NEventsMax = item[1]
             if(item[0]=='Type'): self.Type = item[1]
             if(item[0]=='Version'): self.Version = item[1]
-            if(item[0]=='Cacheable'): self.Cacheable = item[1]
+            if(item[0]=='Cacheable'): 
+                if item[1]=='True' and not cacheMe:
+                    res = raw_input('Cacheable is set to True. Are you sure you want to continue? Y/[N] ')
+                    if res.lower() != 'y':
+                        exit(0)
+                    else: cacheMe = True
+                self.Cacheable = item[1]
             if(item[0]=='NEventsSkip'): self.NEventsSkip = item[1]
         #print self.Version
         self.io_list =[]
@@ -80,7 +86,7 @@ class InputData(object):
 
     def split_NEvents(self,NEventsBreak,LastBreak):
         self.NEventsBreak = NEventsBreak
-        self.LastBreak = LastBreak
+        self.LastBreak = LastBreak   
         
     
 class UserConfig(object):
