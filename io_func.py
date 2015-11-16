@@ -118,7 +118,6 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
 
 
 class header(object):
-    
     def __init__(self,xmlfile):
         f = open(xmlfile)
         line = f.readline()
@@ -131,7 +130,6 @@ class header(object):
                 self.ConfigParse = parseString(line).getElementsByTagName('ConfigParse')[0]
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
-
             if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value
@@ -139,10 +137,7 @@ class header(object):
                 self.Notification = self.ConfigSGE.attributes['Notification'].value
                 self.Mail = self.ConfigSGE.attributes['Mail'].value
                 self.Workdir = self.ConfigSGE.attributes['Workdir'].value
-
         f.close()   
-
-
 
 def get_number_of_events(Job, Version):
     InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
@@ -151,11 +146,9 @@ def get_number_of_events(Job, Version):
             for name in entry:
                 if name.endswith('.root'):
                     f = ROOT.TFile(name)
-                    NEvents += f.Get('AnalysisTree').GetEntriesFast()
+                    NEvents += f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
                     f.Close()
     return NEvents
-
-
 
 def write_all_xml(path,datasetName,header,Job,workdir):
     NEventsBreak= header.NEventsBreak
