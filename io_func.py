@@ -74,36 +74,35 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
                 InputGrandchild.setAttribute('NEventsMax', str(MaxEvents))
         
             count_i =-1
-           
-            for entry in cycle.Cycle_InputData[p].io_list:
+            #print len(cycle.Cycle_InputData[p].io_list)
+            for entry in cycle.Cycle_InputData[p].io_list.FileInfoList:
                 count_i +=1
-               
-                if FileSplit==-1 :
-                    Datachild= doc.createElement(entry[0])
-                    InputGrandchild.appendChild(Datachild)
-                    #print entry
-                    for it in range(1,(len(entry)-1), 2):
-                        #print entry[it],entry[it+1]
-                        Datachild.setAttribute(entry[it],entry[it+1])
-                       
-                elif count_i<(NFile+1)*FileSplit and count_i>= NFile*FileSplit and FileSplit!=-1 and count_i < len(cycle.Cycle_InputData[p].io_list)-2:
-                    Datachild= doc.createElement(entry[0])
-                    InputGrandchild.appendChild(Datachild)
-                                        
-                    for it in range(1,(len(entry)), 2):
-                        #print entry[it],entry[it+1]
-                        Datachild.setAttribute(entry[it],entry[it+1])
-
-            if FileSplit!=-1:
-                InputTreePos = len(cycle.Cycle_InputData[p].io_list)-2
-                InputTree = doc.createElement(cycle.Cycle_InputData[p].io_list[InputTreePos][0])
-                InputGrandchild.appendChild(InputTree)
-                InputTree.setAttribute(cycle.Cycle_InputData[p].io_list[InputTreePos][1],cycle.Cycle_InputData[p].io_list[InputTreePos][2])
+                if FileSplit > 0:
+                    if not (count_i<(NFile+1)*FileSplit and count_i>= NFile*FileSplit):
+                        continue
+                Datachild= doc.createElement(entry[0])
+                InputGrandchild.appendChild(Datachild)
+                for it in range(1,len(entry),2):
+                    #print entry[it],entry[it+1]
+                    Datachild.setAttribute(entry[it],entry[it+1])
                 
-                OutputTreePos = len(cycle.Cycle_InputData[p].io_list)-1
-                OutputTree = doc.createElement(cycle.Cycle_InputData[p].io_list[OutputTreePos][0])
-                InputGrandchild.appendChild(OutputTree)
-                OutputTree.setAttribute(cycle.Cycle_InputData[p].io_list[OutputTreePos][1],cycle.Cycle_InputData[p].io_list[OutputTreePos][2])
+            for entry in cycle.Cycle_InputData[p].io_list.other:
+                Datachild= doc.createElement(entry[0])
+                InputGrandchild.appendChild(Datachild)
+                for it in range(1,len(entry),2):
+                    #print entry[it],entry[it+1]
+                    Datachild.setAttribute(entry[it],entry[it+1])
+            if len(cycle.Cycle_InputData[p].io_list.InputTree)!=3:
+                print 'something wrong with the InputTree, lenght',len(cycle.Cycle_InputData[p].io_list.InputTree)
+                print cycle.Cycle_InputData[p].io_list.InputTree
+                print 'going to exit'
+                exit(0)
+            
+            Datachild= doc.createElement(cycle.Cycle_InputData[p].io_list.InputTree[0])
+            InputGrandchild.appendChild(Datachild)
+            Datachild.setAttribute(cycle.Cycle_InputData[p].io_list.InputTree[1],cycle.Cycle_InputData[p].io_list.InputTree[2])
+           
+                
 
         #InGrandGrandchild= doc.createElement('In')
         ConfigGrandchild  = doc.createElement('UserConfig')
@@ -147,14 +146,13 @@ class header(object):
 
 def get_number_of_events(Job, Version):
     InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
-    input_files = filter(lambda s: s.endswith('.root'), (s for elem in InputData.io_list for s in elem))
-
     NEvents = 0
-    for fname in input_files:
-        f = ROOT.TFile(fname)
-        NEvents += f.Get('AnalysisTree').GetEntriesFast()
-        f.Close()
-
+    for entry in InputData.io_list.FileInfoList:
+            for name in entry:
+                if name.endswith('.root'):
+                    f = ROOT.TFile(name)
+                    NEvents += f.Get('AnalysisTree').GetEntriesFast()
+                    f.Close()
     return NEvents
 
 
@@ -168,7 +166,7 @@ def write_all_xml(path,datasetName,header,Job,workdir):
     Version =datasetName
     if Version[0] =='-1':Version =-1
 
-    if NEventsBreak!=0 and FileSplit==0:
+    if NEventsBreak!=0 and FileSplit<=0:
         NEvents = get_number_of_events(Job, Version)
         print '%s: %i events' % (Version[0], NEvents)
         NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
@@ -187,13 +185,13 @@ def write_all_xml(path,datasetName,header,Job,workdir):
             outfile.write(write_job(Job,Version,i*SkipEvents,MaxEvents,i,-1,workdir,LumiWeight))
             outfile.close()
  
-    elif FileSplit!=0:
+    elif FileSplit>0:
         for entry in Version:
             print 'Splitting job by files',entry
             for cycle in Job.Job_Cylce:
                 for p in range(len(cycle.Cycle_InputData)):
                     if(cycle.Cycle_InputData[p].Version==entry) or Version ==-1:
-                        for it in range(int(math.ceil(float(len(cycle.Cycle_InputData[p].io_list)-2)/FileSplit))):
+                        for it in range(int(math.ceil(float(len(cycle.Cycle_InputData[p].io_list.FileInfoList))/FileSplit))):
                             outfile = open(path+'_'+str(it+1)+'.xml','w+')
                             for line in header.header:
                                 outfile.write(line)
