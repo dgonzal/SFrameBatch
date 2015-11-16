@@ -62,7 +62,8 @@ class JobManager(object):
             rootFiles =0
 	    self.subInfo[i].missingFiles = []     
             for it in range(process.numberOfFiles):
-                if not os.path.exists(OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'):
+                filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
+                if not os.path.exists(filename) or os.stat(filename).st_mtime < 10:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
 		    self.subInfo[i].missingFiles.append(it+1)		    
                 else:
@@ -76,7 +77,7 @@ class JobManager(object):
     #print status of jobs 
     def print_status(self):
         print 'Status of unmerged files'
-        print '%30s: %6s %6s %.6s'% ('Sample Name','#Files','Ready','[%]')
+        print '%30s: %6s %6s %.6s'% ('Sample Name','Ready','#Files','[%]')
         for process in self.subInfo:
             print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*process.rootFileCounter/float(process.numberOfFiles)), 'Done' if process.rootFileCounter == process.numberOfFiles else ''
         print 'Number of files expected: ',self.totalFiles
@@ -95,6 +96,7 @@ class MergeManager(object):
         self.wait = wait
         
     def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData):
+        print "Don't worry your are using nice = 10 "
         if not self.add and not self.force: return  
         OutputTreeName = ""
         for inputObj in InputData:
@@ -110,11 +112,19 @@ class MergeManager(object):
                     process.status = 1
     
     def wait_till_finished(self):
-        print "Don't worry your are using nice = 10 "
         if not self.wait: return
         for process in self.active_process:
             if not process: continue
             if not process.poll():
                 process.wait()
                 #os.kill(process.pid,-9)
+                
+class pidWatcher(object):
+    def __init__(pid):
+        self.pid = pid
         
+    def watch():
+        proc_qstat = subprocess.Popen(['qstat -xml'],stdout=subprocess.PIPE)
+        qstat_xml = proc_qstat.communicate()[0]
+        
+        return

@@ -76,6 +76,9 @@ def submit_qsub(NFiles,Stream,name,workdir):
         print Stream+' has been created'
  
     call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    #proc_qstat = Popen(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=subprocess.PIPE)
+    #return proc_qstat.communicate()[0]
+
 
 def resubmit(Stream,name,workdir,header):
     #print Stream ,name
@@ -85,7 +88,8 @@ def resubmit(Stream,name,workdir,header):
         print Stream+' has been created'
  
     call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
-
+    #proc_qstat = Popen(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=subprocess.PIPE)
+    #return proc_qstat.communicate()[0]
 
 def add_histos(directory,name,NFiles,workdir,outputTree) :
     if os.path.exists(directory+name+'.root'):
