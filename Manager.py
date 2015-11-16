@@ -96,11 +96,11 @@ class MergeManager(object):
         self.wait = wait
         
     def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData):
-        print "Don't worry your are using nice = 10 "
         if not self.add and not self.force: return  
+        print "Don't worry your are using nice = 10 "
         OutputTreeName = ""
         for inputObj in InputData:
-            for mylist in inputObj.io_list:
+            for mylist in inputObj.io_list.other:
                 if "OutputTree" in mylist:
                     OutputTreeName= mylist[2]
         for process in info:
