@@ -27,19 +27,21 @@ There are some open issues and possible extensions.
 
 -> For more have a look at the help: sframe_batch.py --help
 
--> Split by file and by events is in. For split by events all the files need to be opend.
+-> Split by file and by events is in.
+
+-> For ppl interested in new features pls check the brach *development*. Since coding is most of the time rather easy and debbuging is not. At least some ppl using this branch would be very good. 
 
 ## Issues 
 -> very few safty & sanity checks
 
--> Code needs facelift
-
--> Documantation is missing
+-> Code documantation is missing
 
 -> optparser deprecated should be changed to argparser
 
 ## Extensions & improvements
 
--> http://stackoverflow.com/questions/26104116/qstat-and-long-job-names retrieve names and extendet support for resubmission if job is fails 
+-> http://stackoverflow.com/questions/26104116/qstat-and-long-job-names retrieve names and extendet support for resubmission if job is fails (in progress)
+
+-> automatic resubmission (in progress)
 
 -> gui e.g. see https://github.com/wardi/urwid, it is shipped with cmssw
