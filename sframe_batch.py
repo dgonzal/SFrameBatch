@@ -106,9 +106,9 @@ if __name__ == "__main__":
             manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
             if not manager.subInfo: break
             if options.loop: 
-                time.sleep(30)
                 manager.print_status()
                 print '='*80
+                time.sleep(30)
         #print 'Total progress', tot_prog
         manager.merge_wait()
         manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)

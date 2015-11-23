@@ -31,12 +31,15 @@ class pidWatcher(object):
             #print jobs.getElementsByTagName("state")[0].firstChild.nodeValue
             self.pidList.append(jobs.getElementsByTagName("JB_job_number")[0].firstChild.data)
             self.stateList.append(jobs.getElementsByTagName("state")[0].firstChild.nodeValue)
-            self.taskList.append(jobs.getElementsByTagName("tasks")[0].firstChild.data)
-
+            if jobs.getElementsByTagName("tasks"):
+                self.taskList.append(jobs.getElementsByTagName("tasks")[0].firstChild.data)
+            else:
+                self.taskList.append(-1)
+            
     def check_pidstatus(self,pid,task):
         for i in range(len(self.pidList)):
             #print pid, self.stateList[i],type(self.stateList[i]),type('r') , str(self.stateList[i]),str(self.stateList[i].encode('ascii','ignore')) 
-            if str(self.pidList[i]) == pid and str(self.taskList[i] == task):
+            if str(self.pidList[i]) == pid and (str(self.taskList[i] == task) or self.taskList[i]==-1):
                 if str(self.stateList[i]) == 'r' or str(self.stateList[i]) == 'qw':
                     return 1
                 else: 
@@ -45,10 +48,10 @@ class pidWatcher(object):
 
 class HelpJSON:
     def __init__(self,json_file):
-        print 'Using saved settings from:', json_file
         self.data = None
         #return
         if os.path.isfile(json_file):
+            print 'Using saved settings from:', json_file
             self.data = json.load(open(json_file,'r'))
             #self.data = json.load(self.data)
 
@@ -119,9 +122,9 @@ class JobManager(object):
                 exit(0)
         for process in self.subInfo:
 	    for it in process.missingFiles:
-                process.pids.append(resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header))
+                process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
                 process.jobnum[it] = True
-                print 'Resubmitted job',process.name, 'pid', process.pids
+                print 'Resubmitted job',process.name,it, 'pid', process.pids[it]
 
     #see how many jobs finished, were copied to workdir or were merged 
     def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = True):
@@ -169,9 +172,11 @@ class JobManager(object):
     def print_status(self):
         print 'Status of unmerged files'
         print '%30s: %6s %6s %.6s'% ('Sample Name','Ready','#Files','[%]')
+        readyFiles =0
         for process in self.subInfo:
-            print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*process.rootFileCounter/float(process.numberOfFiles)), 'Done' if process.rootFileCounter == process.numberOfFiles else ''
-        print 'Number of files expected: ',self.totalFiles
+            print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*float(process.rootFileCounter)/float(process.numberOfFiles)), 'Done' if process.rootFileCounter == process.numberOfFiles else ''
+            readyFiles += process.rootFileCounter
+        print 'Number of unmerged files: ',readyFiles,'/',self.totalFiles,'(%.3i)' % (100*(1-float(readyFiles)/float(self.totalFiles)))
     #take care of merging
     def merge_files(self,OutputDirectory,nameOfCycle,InputData):
         self.merge.merge(OutputDirectory,nameOfCycle,self.subInfo,self.workdir,InputData)
