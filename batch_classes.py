@@ -2,6 +2,7 @@
 
 from subprocess import call
 from subprocess import Popen
+from subprocess import PIPE
 import os
 
 from tree_checker import *
@@ -65,8 +66,6 @@ sframe_main """+name+""".xml
 """)    
     myfile.close()
 
-
-
 def submit_qsub(NFiles,Stream,name,workdir):
     #print '-t 1-'+str(int(NFiles))
     #call(['ls','-l'], shell=True)
@@ -75,9 +74,9 @@ def submit_qsub(NFiles,Stream,name,workdir):
         os.makedirs(Stream)
         print Stream+' has been created'
  
-    call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
-    #proc_qstat = Popen(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=subprocess.PIPE)
-    #return proc_qstat.communicate()[0]
+    #call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    proc_qstat = Popen(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
+    return (proc_qstat.communicate()[0].split()[2]).split('.')[0]
 
 
 def resubmit(Stream,name,workdir,header):
@@ -86,10 +85,9 @@ def resubmit(Stream,name,workdir,header):
     if not os.path.exists(Stream):
         os.makedirs(Stream)
         print Stream+' has been created'
- 
-    call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
-    #proc_qstat = Popen(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=subprocess.PIPE)
-    #return proc_qstat.communicate()[0]
+    #call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    proc_qstat = Popen(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
+    return proc_qstat.communicate()[0].split()[2]
 
 def add_histos(directory,name,NFiles,workdir,outputTree) :
     if os.path.exists(directory+name+'.root'):
@@ -104,7 +102,6 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
         string += directory+workdir+'/'+name+'_'+str(i)+'.root'
         string += " "
         fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
-
     #print string
     if not string.isspace():
         #fhadd(directory+name+'.root',fileContainer,"TH1")
