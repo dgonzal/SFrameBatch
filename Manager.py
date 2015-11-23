@@ -9,7 +9,8 @@ import os
 import subprocess
 import datetime
 import json
-#import cPickle
+#from fnmatch import fnmatchcase
+import re
 
 import StringIO
 from xml.dom.minidom import parse, parseString
@@ -32,15 +33,18 @@ class pidWatcher(object):
             self.pidList.append(jobs.getElementsByTagName("JB_job_number")[0].firstChild.data)
             self.stateList.append(jobs.getElementsByTagName("state")[0].firstChild.nodeValue)
             if jobs.getElementsByTagName("tasks"):
-                self.taskList.append(jobs.getElementsByTagName("tasks")[0].firstChild.data)
+                taskvalue = str(jobs.getElementsByTagName("tasks")[0].firstChild.data)
+                if ':' in taskvalue:
+                    taskvalue = '['+str(taskvalue.split(':')[0])+']'
+                self.taskList.append(taskvalue)
             else:
                 self.taskList.append(-1)
             
     def check_pidstatus(self,pid,task):
         for i in range(len(self.pidList)):
-            #print pid, self.stateList[i],type(self.stateList[i]),type('r') , str(self.stateList[i]),str(self.stateList[i].encode('ascii','ignore')) 
-            if str(self.pidList[i]) == pid and (str(self.taskList[i] == task) or self.taskList[i]==-1):
-                if str(self.stateList[i]) == 'r' or str(self.stateList[i]) == 'qw':
+            #if pid == self.pidList[i]:print pid,self.pidList[i], self.stateList[i],self.taskList[i],task 
+            if str(self.pidList[i]) == str(pid) and (re.match(self.taskList[i],str(task)) or self.taskList[i]==-1):
+                if str(self.stateList[i]) == 'r' or str(self.stateList[i]) == 'qw' or str(self.stateList[i]) == 't':
                     return 1
                 else: 
                     return 2
@@ -58,9 +62,10 @@ class HelpJSON:
     def check(self,datasetname):
         for element in self.data:
             jdict = json.loads(element)
-            if datasetname == jdict['name']:
+            if str(datasetname) == str(jdict['name']):
+                print 'Found SubInfo for',jdict['name']
                 mysub = SubInfo()
-                mysub.load_JSON(mtest)
+                mysub.load_Dict(jdict) 
                 return mysub
         return None
 
@@ -75,11 +80,12 @@ class SubInfo(object):
 	self.missingFiles = []
         self.pids = ['']*numberOfFiles
         self.jobnum = [False]*numberOfFiles
-        self.arrayPid = None
+        self.arrayPid = -1
         self.resubmit = resubmit
     def to_JSON(self):
+        #print json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-    def load_JSON(self,data):
+    def load_Dict(self,data):
         self.__dict__ = data
     
 class JobManager(object):
@@ -98,7 +104,7 @@ class JobManager(object):
             processName = ([InputData[process].Version])
             if jsonhelper.data:
                 helpSubInfo = SubInfo()
-                found = jsonhelper.check(processName)
+                found = jsonhelper.check(InputData[process].Version)
                 if found:
                     self.subInfo.append(found)
             if not found: 
@@ -113,18 +119,29 @@ class JobManager(object):
             print 'Submitted jobs',process.name, 'pid', process.arrayPid
     #resubmit the jobs see above      
     def resubmit_jobs(self):
+        watch = pidWatcher()
         proc_qstat = subprocess.Popen(['qstat'],stdout=subprocess.PIPE)
         qstat_out = proc_qstat.communicate()[0]
-        if qstat_out:
-            print '\n' + qstat_out
-            res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
-            if res.lower() != 'y':
-                exit(0)
+        ask = True
         for process in self.subInfo:
 	    for it in process.missingFiles:
-                process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
-                process.jobnum[it] = True
-                print 'Resubmitted job',process.name,it, 'pid', process.pids[it]
+                status = -1
+                if process.jobnum[it-1]: 
+                    status = watch.check_pidstatus(process.pids[it-1],it)
+                else:
+                    status = watch.check_pidstatus(process.arrayPid,it)
+
+                if qstat_out and status==-1 and ask:
+                    print '\n' + qstat_out
+                    res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
+                    if res.lower() != 'y':
+                        exit(0)
+                    ask = False
+                
+                if status != 1:
+                    process.pids[it-1] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
+                    process.jobnum[it-1] = True
+                    print 'Resubmitted job',process.name,it, 'pid', process.pids[it-1]
 
     #see how many jobs finished, were copied to workdir or were merged 
     def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = True):
@@ -138,7 +155,7 @@ class JobManager(object):
             ListOfDict.append(process.to_JSON())
             #jsonFile.write(process.to_JSON())
             rootFiles =0
-            #self.subInfo
+            #print self.subInfo[0].arrayPid
             status = -1
 	    self.subInfo[i].missingFiles = []     
             for it in range(process.numberOfFiles):
@@ -146,7 +163,7 @@ class JobManager(object):
                     status = watch.check_pidstatus(process.pids[it],it+1)
                 else:
                     status = watch.check_pidstatus(process.arrayPid,it+1)
-
+                #print status
                 #if status == 2 and (self.resubmit ==-1 or self.resubmit>0):
                 # kill jobs with pid    
                 # resubmit and lower resubmit if it not -1
