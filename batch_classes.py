@@ -92,17 +92,17 @@ def resubmit(Stream,name,workdir,header):
 def add_histos(directory,name,NFiles,workdir,outputTree) :
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
-    string =" "
     fileContainer=[]
     proc = None
+    position = -1
+    if(outputTree):
+        for i in range(NFiles):
+            if check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
+                position = i
+                string+=' '+directory+workdir+'/'+name+'_'+str(i)+'.root'
     for i in range(NFiles):
-    #    if(outputTree):
-    #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
-    #            continue
-        string += directory+workdir+'/'+name+'_'+str(i)+'.root'
-        string += " "
-        fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
-    #print string
+        if not position == i:
+            string += ' '+directory+workdir+'/'+name+'_'+str(i)+'.root'
     if not string.isspace():
         #fhadd(directory+name+'.root',fileContainer,"TH1")
         print 'Merging',name+'.root'
@@ -110,3 +110,5 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
     else:
         print 'Nothing to merge for',name+'.root'
     return proc 
+
+

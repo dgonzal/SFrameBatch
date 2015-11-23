@@ -172,7 +172,6 @@ class JobManager(object):
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
 		    self.subInfo[i].missingFiles.append(it+1)		    
                 else:
-                    #print datetime.datetime.fromtimestamp(os.stat(filename).st_mtime),datetime.datetime.fromtimestamp(os.stat(filename).st_ctime),datetime.datetime.fromtimestamp(os.stat(filename).st_atime)
                     rootFiles+=1
             process.rootFileCounter=rootFiles
             if remove:
