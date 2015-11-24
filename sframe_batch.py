@@ -41,6 +41,11 @@ if __name__ == "__main__":
                      dest="add",
                      default=False,
                      help="hadd files to one") 
+    parser.add_option("-T", "--addFilesNoTree",
+                     action="store_true",
+                     dest="addNoTree",
+                     default=False,
+                     help="hadd files to one, without merging TTrees. Can be combined with -f.") 
     parser.add_option("-f", "--forceMerge",
                       action="store_true", # optional because action defaults to "store"
                       dest="forceMerge",

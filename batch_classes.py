@@ -89,12 +89,14 @@ def resubmit(Stream,name,workdir,header):
     proc_qstat = Popen(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
     return proc_qstat.communicate()[0].split()[2]
 
-def add_histos(directory,name,NFiles,workdir,outputTree) :
+def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
-    fileContainer=[]
+    string=''
     proc = None
     position = -1
+    command_string = 'nice -n 10 hadd -v 1 ' 
+    if onlyhists: command_string += '-T '
     if(outputTree):
         for i in range(NFiles):
             if check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
@@ -106,7 +108,7 @@ def add_histos(directory,name,NFiles,workdir,outputTree) :
     if not string.isspace():
         #fhadd(directory+name+'.root',fileContainer,"TH1")
         print 'Merging',name+'.root'
-        proc = Popen(['nice -n 10 hadd '+'-v 1 '+directory+name+'.root'+string], shell=True)
+        proc = Popen([command_string+directory+name+'.root'+string], shell=True)
     else:
         print 'Nothing to merge for',name+'.root'
     return proc 
