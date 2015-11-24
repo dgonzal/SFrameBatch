@@ -34,16 +34,20 @@ class pidWatcher(object):
             self.stateList.append(jobs.getElementsByTagName("state")[0].firstChild.nodeValue)
             if jobs.getElementsByTagName("tasks"):
                 taskvalue = str(jobs.getElementsByTagName("tasks")[0].firstChild.data)
-                if ':' in taskvalue:
-                    taskvalue = '['+str(taskvalue.split(':')[0])+']'
                 self.taskList.append(taskvalue)
             else:
                 self.taskList.append(-1)
             
     def check_pidstatus(self,pid,task):
         for i in range(len(self.pidList)):
+            inrange = False
+            if ':' in str(self.taskList[i]):
+                splitted_string = (str(taskvalue.split(':')[0])).split('-')
+                inrange = int(splitted_string[0]) >= int(task) and  int(splitted_string[1]) <= int(task)
+            else:
+                inrange = str(self.taskList[i])==str(task)
             #if pid == self.pidList[i]:print pid,self.pidList[i], self.stateList[i],self.taskList[i],task 
-            if str(self.pidList[i]) == str(pid) and (re.match(self.taskList[i],str(task)) or self.taskList[i]==-1):
+            if str(self.pidList[i]) == str(pid) and (inrange or self.taskList[i]==-1):
                 if str(self.stateList[i]) == 'r' or str(self.stateList[i]) == 'qw' or str(self.stateList[i]) == 't':
                     return 1
                 else: 
@@ -92,7 +96,7 @@ class JobManager(object):
     def __init__(self,options,header,workdir):
         self.header = header #how do I split stuff, sframe_batch header in xml file
         self.workdir = workdir #name of the workdir
-        self.merge  = MergeManager(options.add,options.forceMerge,options.waitMerge)
+        self.merge  = MergeManager(options.add,options.forceMerge,options.waitMerge,options.addNoTree)
         self.subInfo = [] #information about the submission status
         self.deadJobs = 0 #check if no file has been written to disk and nothing is on running on the batch
         self.totalFiles =0
@@ -201,14 +205,15 @@ class JobManager(object):
         self.merge.wait_till_finished()
                                
 class MergeManager(object):
-    def __init__(self,add,force,wait):
+    def __init__(self,add,force,wait,onlyhist=False):
         self.add = add
         self.force = force
         self.active_process=[]
         self.wait = wait
-        
+        self.onlyhist = onlyhist
+
     def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData):
-        if not self.add and not self.force: return  
+        if not self.add and not self.force and not self.onlyhist: return  
         print "Don't worry your are using nice = 10 "
         OutputTreeName = ""
         for inputObj in InputData:
@@ -220,7 +225,7 @@ class MergeManager(object):
                 continue
             if not os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root') or self.force:
                 if process.status ==0:
-                    self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName))
+                    self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName,self.onlyhist))
                     process.status = 1
     
     def wait_till_finished(self):
