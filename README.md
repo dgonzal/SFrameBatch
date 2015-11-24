@@ -32,6 +32,8 @@ There are some open issues and possible extensions.
 
 -> Split by file and by events is in.
 
+-> All the information of stdout and stderr is in workdir/Stream_*xml-File-Name*/
+
 -> For ppl interested in new features pls check the brach *development*. Since coding is most of the time rather easy and debbuging is not. At least some ppl using this branch would be very good. 
 
 ## Issues 
