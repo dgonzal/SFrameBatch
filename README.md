@@ -1,6 +1,6 @@
 # SFrame Batch
 
-This is a script to split the SFrame xml files and send the jobs to the batch with qsub, while still beeing compatible with plain SFrame. After the jobs are back it also takes care to hadd the jobs for you.
+This is a script to split the SFrame XML files and send the jobs to the batch with qsub, while still beeing compatible with plain SFrame. After the jobs are back it also takes care to hadd the jobs if you want it.
 There are some open issues and possible extensions.
 
 
@@ -37,7 +37,7 @@ There are some open issues and possible extensions.
 ## Issues 
 -> hadd throws some warnings
 
--> very few safty & sanity checks
+-> very few safety & sanity checks
 
 -> Code documantation is missing
 
