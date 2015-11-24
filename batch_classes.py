@@ -2,10 +2,11 @@
 
 from subprocess import call
 from subprocess import Popen
+from subprocess import PIPE
 import os
 
 from tree_checker import *
-# from fhadd import fhadd
+#from fhadd import fhadd
 
 
 def write_script(name,workdir,header):
@@ -65,8 +66,6 @@ sframe_main """+name+""".xml
 """)    
     myfile.close()
 
-
-
 def submit_qsub(NFiles,Stream,name,workdir):
     #print '-t 1-'+str(int(NFiles))
     #call(['ls','-l'], shell=True)
@@ -75,7 +74,10 @@ def submit_qsub(NFiles,Stream,name,workdir):
         os.makedirs(Stream)
         print Stream+' has been created'
  
-    call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    #call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    proc_qstat = Popen(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
+    return (proc_qstat.communicate()[0].split()[2]).split('.')[0]
+
 
 def resubmit(Stream,name,workdir,header):
     #print Stream ,name
@@ -83,25 +85,23 @@ def resubmit(Stream,name,workdir,header):
     if not os.path.exists(Stream):
         os.makedirs(Stream)
         print Stream+' has been created'
- 
-    call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
-
+    #call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
+    proc_qstat = Popen(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
+    return proc_qstat.communicate()[0].split()[2]
 
 def add_histos(directory,name,NFiles,workdir,outputTree) :
-    
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
     string =" "
     fileContainer=[]
     proc = None
     for i in range(NFiles):
-        if(outputTree):
-            if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
-                continue
+    #    if(outputTree):
+    #        if not check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
+    #            continue
         string += directory+workdir+'/'+name+'_'+str(i)+'.root'
         string += " "
         fileContainer.append(directory+workdir+'/'+name+'_'+str(i)+'.root')
-
     #print string
     if not string.isspace():
         #fhadd(directory+name+'.root',fileContainer,"TH1")
