@@ -43,7 +43,7 @@ class pidWatcher(object):
         for i in range(len(self.pidList)):
             inrange = False
             if ':' in str(self.taskList[i]):
-                splitted_string = (str(taskvalue.split(':')[0])).split('-')
+                splitted_string = (str(self.taskList[i].split(':')[0])).split('-')
                 inrange = int(splitted_string[0]) >= int(task) and  int(splitted_string[1]) <= int(task)
             else:
                 inrange = str(self.taskList[i])==str(task)
@@ -102,7 +102,7 @@ class JobManager(object):
         self.deadJobs = 0 #check if no file has been written to disk and nothing is on running on the batch
         self.totalFiles = 0
         self.missingFiles = -1
-        self.move_cursor_up_cmd = None
+        self.move_cursor_up_cmd = None # pretty print status
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
