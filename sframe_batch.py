@@ -109,7 +109,9 @@ if __name__ == "__main__":
             if not options.loop:loop_check = False
             manager.merge_files(cycle.OutputDirectory,nameOfCycle,cycle.Cycle_InputData)
             manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
-            if not manager.subInfo: break
+            if not manager.subInfo or (not manager.merge.get_mergerStatus() and manager.missingFiles==0):
+                print 'if grid pid information got lost root Files could still be transferring'
+                break
             if options.loop: 
                 manager.print_status()
                 print '='*80

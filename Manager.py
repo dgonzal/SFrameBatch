@@ -101,6 +101,7 @@ class JobManager(object):
         self.subInfo = [] #information about the submission status
         self.deadJobs = 0 #check if no file has been written to disk and nothing is on running on the batch
         self.totalFiles = 0
+        self.missingFiles = -1
         self.move_cursor_up_cmd = None
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
@@ -153,15 +154,12 @@ class JobManager(object):
     def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = True):
         watch = pidWatcher()
         missing = open(self.workdir+'/missing_files.txt','w+')
-        #jsonFile = open(self.workdir+'/SubmissinInfoSave.p','wb+')
-        #jsonFile.write('[')
+        missingRootFiles = 0 
         ListOfDict =[]
         for i in xrange(len(self.subInfo)-1, -1, -1):
             process = self.subInfo[i]
             ListOfDict.append(process.to_JSON())
-            #jsonFile.write(process.to_JSON())
             rootFiles =0
-            #print self.subInfo[0].arrayPid
             status = -1
 	    self.subInfo[i].missingFiles = []     
             for it in range(process.numberOfFiles):
@@ -176,7 +174,8 @@ class JobManager(object):
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
                 if not os.path.exists(filename) or status==1:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
-		    self.subInfo[i].missingFiles.append(it+1)		    
+		    self.subInfo[i].missingFiles.append(it+1)	
+                    missingRootFiles +=1
                 else:
                     rootFiles+=1
             process.rootFileCounter=rootFiles
@@ -184,9 +183,9 @@ class JobManager(object):
                 if os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root'):
                     del self.subInfo[i]
         missing.close()
-        #jsonFile.write(']')
+        self.missingFiles = missingRootFiles
+        #Save/update pids and other information to json file, such that it can be loaded and used later
         jsonFile = open(self.workdir+'/SubmissinInfoSave.p','wb+')
-        #jsonFile.write(ListOfDict)
         json.dump(ListOfDict, jsonFile)
         jsonFile.close()
                 
@@ -221,6 +220,12 @@ class MergeManager(object):
         self.active_process=[]
         self.wait = wait
         self.onlyhist = onlyhist
+
+    def get_mergerStatus(self):
+        if self.add or self.force or self.onlyhist:
+            return True
+        else:
+            return False
 
     def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData):
         if not self.add and not self.force and not self.onlyhist: return  
