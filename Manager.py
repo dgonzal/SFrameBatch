@@ -9,6 +9,7 @@ import os
 import subprocess
 import datetime
 import json
+import time
 #from fnmatch import fnmatchcase
 import re
 
@@ -99,7 +100,8 @@ class JobManager(object):
         self.merge  = MergeManager(options.add,options.forceMerge,options.waitMerge,options.addNoTree)
         self.subInfo = [] #information about the submission status
         self.deadJobs = 0 #check if no file has been written to disk and nothing is on running on the batch
-        self.totalFiles =0
+        self.totalFiles = 0
+        self.move_cursor_up_cmd = None
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
@@ -190,9 +192,17 @@ class JobManager(object):
                 
     #print status of jobs 
     def print_status(self):
-        print 'Status of unmerged files'
+        if not self.move_cursor_up_cmd:
+            self.move_cursor_up_cmd = '\x1b[1A\x1b[2K'*(len(self.subInfo) + 3)
+            self.move_cursor_up_cmd += '\x1b[1A' # move once more up since 'print' finishes the line
+            print 'Status of unmerged files'
+        else:
+            print self.move_cursor_up_cmd
+            time.sleep(.2)  # 'blink'
+
         print '%30s: %6s %6s %.6s'% ('Sample Name','Ready','#Files','[%]')
         readyFiles =0
+
         for process in self.subInfo:
             print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*float(process.rootFileCounter)/float(process.numberOfFiles)), 'Done' if process.rootFileCounter == process.numberOfFiles else ''
             readyFiles += process.rootFileCounter
