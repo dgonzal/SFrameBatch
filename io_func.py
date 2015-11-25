@@ -130,6 +130,7 @@ class header(object):
                 self.ConfigParse = parseString(line).getElementsByTagName('ConfigParse')[0]
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
+                self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)
             if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value

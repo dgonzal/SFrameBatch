@@ -15,7 +15,7 @@ import StringIO
 from xml.dom.minidom import parse, parseString
 import xml.sax
 
-
+# takes care of looking into qstat 
 class pidWatcher(object):
     def __init__(self):
         self.pidList = []
@@ -53,6 +53,7 @@ class pidWatcher(object):
                     return 2
         return 0
 
+#JSON Format is used to store the submission information
 class HelpJSON:
     def __init__(self,json_file):
         self.data = None
@@ -68,11 +69,10 @@ class HelpJSON:
             if str(datasetname) == str(jdict['name']) and (str(jdict['arrayPid']) or any(jdict['pids'])):
                 print 'Found Submission Info for',jdict['name']
                 mysub = SubInfo()
-                mysub.load_Dict(jdict) 
+                mysub.load_Dict(jdict)
                 return mysub
         return None
-
-
+# class for the submission information
 class SubInfo(object):
     def __init__(self,name='',numberOfFiles=0,data_type='',resubmit =0):
         self.name = name
@@ -98,7 +98,7 @@ class JobManager(object):
         self.merge  = MergeManager(options.add,options.forceMerge,options.waitMerge,options.addNoTree)
         self.subInfo = [] #information about the submission status
         self.deadJobs = 0 #check if no file has been written to disk and nothing is on running on the batch
-        self.totalFiles = 0
+        self.totalFiles = 0  
         self.missingFiles = -1
         self.move_cursor_up_cmd = None # pretty print status
         self.numOfResubmit =0
@@ -116,6 +116,7 @@ class JobManager(object):
             if not found: 
                 self.subInfo.append(SubInfo(InputData[process].Version,write_all_xml(self.workdir+'/'+InputData[process].Version,processName,self.header,Job,self.workdir),InputData[process].Type))
             self.totalFiles += self.subInfo[process].numberOfFiles
+            self.subInfo[process].resubmit = header.AutoResubmit #Reset the retries every time you start
             write_script(processName[0],self.workdir,self.header)
     #submit the jobs to the batch as array job
     #the used function should soon return the pid of the job for killing and knowing if something failed
@@ -148,7 +149,7 @@ class JobManager(object):
                     process.jobnum[it-1] = True
                     print 'Resubmitted job',process.name,it, 'pid', process.pids[it-1]
                     if process.status != 0:process.status =0
-    #see how many jobs finished, were copied to workdir or were merged 
+    #see how many jobs finished, were copied to workdir 
     def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = False):
         watch = pidWatcher()
         missing = open(self.workdir+'/missing_files.txt','w+')
@@ -183,11 +184,11 @@ class JobManager(object):
                         res = raw_input('More then 20% of jobs are died, do you really want to continue? Y/[N] ')
                         if res.lower() != 'y':
                             exit(0)
-                #If resubits are used up go into failed
+                #If resubmits are used up go into failed
                 if status==0 and process.status == 0 and process.resubmit ==0:
                     process.status = 5
 
-                #check if files have arrived and 
+                #check if files have arrived 
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
                 if not os.path.exists(filename) or status==1:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
@@ -232,13 +233,13 @@ class JobManager(object):
     #wait for every process to finish
     def merge_wait(self):
         self.merge.wait_till_finished()
-              
+    #see how many jobs finished (or error)
     def get_subInfoFinish(self):
         for process in self.subInfo:
             if process.status==0 or process.status==1: 
                 return False
         return True
-                 
+#class to take care of merging (maybe rethink design)
 class MergeManager(object):
     def __init__(self,add,force,wait,onlyhist=False):
         self.add = add
