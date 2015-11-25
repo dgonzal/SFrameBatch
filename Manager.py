@@ -101,6 +101,7 @@ class JobManager(object):
         self.totalFiles = 0
         self.missingFiles = -1
         self.move_cursor_up_cmd = None # pretty print status
+        self.numOfResubmit =0
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
@@ -161,14 +162,32 @@ class JobManager(object):
             status = -1
 	    self.subInfo[i].missingFiles = []     
             for it in range(process.numberOfFiles):
+                #have a look at the pids with qstat
                 if process.jobnum[it]: 
                     status = watch.check_pidstatus(process.pids[it],it+1)
                 else:
                     status = watch.check_pidstatus(process.arrayPid,it+1)
-                #print status
-                #if status == 2 and (self.resubmit ==-1 or self.resubmit>0):
-                # kill jobs with pid    
-                # resubmit and lower resubmit if it not -1
+                #kill jobs with have an error state
+                if status == 2:
+                     if process.jobnum[it]: 
+                         subprocess.Popen(['qdel',str(process.pids[it])],stdout=subprocess.PIPE)
+                     else:
+                         subprocess.Popen(['qdel',str(process.arrayPid)+'.'+str(it)],stdout=subprocess.PIPE)
+                #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
+                if status==0 and process.status == 0 and (process.resubmit ==-1 or process.resubmit>0) and (process.jobnum[it] or process.arrayPid):
+                    process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
+                    if process.resubmit > 0 : 
+                        process.resubmit -= 1
+                    self.numOfResubmit +=1
+                    if float(self.numOfResubmit)/float(self.numberOfFiles) >.2:
+                        res = raw_input('More then 20% of jobs are died, do you really want to continue? Y/[N] ')
+                        if res.lower() != 'y':
+                            exit(0)
+                #If resubits are used up go into failed
+                if status==0 and process.status == 0 and process.resubmit ==0:
+                    process.status = 5
+
+                #check if files have arrived and 
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
                 if not os.path.exists(filename) or status==1:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
@@ -194,7 +213,6 @@ class JobManager(object):
         if not self.move_cursor_up_cmd:
             self.move_cursor_up_cmd = '\x1b[1A\x1b[2K'*(len(self.subInfo) + 3)
             self.move_cursor_up_cmd += '\x1b[1A' # move once more up since 'print' finishes the line
-            self.move_cursor_up_cmd += '\x1b[1A'
             print 'Status of unmerged files'
         else:
             print self.move_cursor_up_cmd
@@ -204,10 +222,10 @@ class JobManager(object):
         readyFiles =0
 
         for process in self.subInfo:
-            status_message = ['\033[94m Working \033[0m','\033[92m Transfered \033[0m','Merging','Already Merged']
+            status_message = ['\033[94m Working \033[0m','\033[92m Transferred \033[0m','Merging','Already Merged','\033[93m Failed\033 [0m']
             print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*float(process.rootFileCounter)/float(process.numberOfFiles)), status_message[process.status]
             readyFiles += process.rootFileCounter
-        print 'Number of unmerged files: ',readyFiles,'/',self.totalFiles,'(%.3i)' % (100*(1-float(readyFiles)/float(self.totalFiles)))
+        print 'Number of files: ',readyFiles,'/',self.totalFiles,'(%.3i)' % (100*(1-float(readyFiles)/float(self.totalFiles)))
     #take care of merging
     def merge_files(self,OutputDirectory,nameOfCycle,InputData):
         self.merge.merge(OutputDirectory,nameOfCycle,self.subInfo,self.workdir,InputData)
@@ -237,7 +255,7 @@ class MergeManager(object):
 
     def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData):
         if not self.add and not self.force and not self.onlyhist: return  
-        print "Don't worry your are using nice = 10 "
+        #print "Don't worry your are using nice = 10" 
         OutputTreeName = ""
         for inputObj in InputData:
             for mylist in inputObj.io_list.other:
@@ -257,6 +275,7 @@ class MergeManager(object):
         if not self.wait: return
         for process in self.active_process:
             if not process: continue
+            print process.communicate()[0]
             if not process.poll():
                 process.wait()
                 #os.kill(process.pid,-9)
