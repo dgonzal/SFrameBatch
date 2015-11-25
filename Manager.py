@@ -10,8 +10,6 @@ import subprocess
 import datetime
 import json
 import time
-#from fnmatch import fnmatchcase
-import re
 
 import StringIO
 from xml.dom.minidom import parse, parseString
@@ -67,8 +65,8 @@ class HelpJSON:
     def check(self,datasetname):
         for element in self.data:
             jdict = json.loads(element)
-            if str(datasetname) == str(jdict['name']):
-                print 'Found SubInfo for',jdict['name']
+            if str(datasetname) == str(jdict['name']) and (str(jdict['arrayPid']) or any(jdict['pids'])):
+                print 'Found Submission Info for',jdict['name']
                 mysub = SubInfo()
                 mysub.load_Dict(jdict) 
                 return mysub
@@ -124,6 +122,7 @@ class JobManager(object):
         for process in self.subInfo:
             process.arrayPid = submit_qsub(process.numberOfFiles,self.workdir+'/Stream_'+str(process.name),str(process.name),self.workdir)
             print 'Submitted jobs',process.name, 'pid', process.arrayPid
+            if process.status != 0:process.status =0
     #resubmit the jobs see above      
     def resubmit_jobs(self):
         watch = pidWatcher()
@@ -137,21 +136,19 @@ class JobManager(object):
                     status = watch.check_pidstatus(process.pids[it-1],it)
                 else:
                     status = watch.check_pidstatus(process.arrayPid,it)
-
                 if qstat_out and status==-1 and ask:
                     print '\n' + qstat_out
                     res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
                     if res.lower() != 'y':
                         exit(0)
                     ask = False
-                
                 if status != 1:
                     process.pids[it-1] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
                     process.jobnum[it-1] = True
                     print 'Resubmitted job',process.name,it, 'pid', process.pids[it-1]
-
+                    if process.status != 0:process.status =0
     #see how many jobs finished, were copied to workdir or were merged 
-    def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = True):
+    def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = False):
         watch = pidWatcher()
         missing = open(self.workdir+'/missing_files.txt','w+')
         missingRootFiles = 0 
@@ -159,6 +156,7 @@ class JobManager(object):
         for i in xrange(len(self.subInfo)-1, -1, -1):
             process = self.subInfo[i]
             ListOfDict.append(process.to_JSON())
+            if not process.missingFiles and process.status !=0: continue            
             rootFiles =0
             status = -1
 	    self.subInfo[i].missingFiles = []     
@@ -179,6 +177,8 @@ class JobManager(object):
                 else:
                     rootFiles+=1
             process.rootFileCounter=rootFiles
+            if not process.missingFiles and not process.status > 1:
+                process.status = 1
             if remove:
                 if os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root'):
                     del self.subInfo[i]
@@ -194,16 +194,18 @@ class JobManager(object):
         if not self.move_cursor_up_cmd:
             self.move_cursor_up_cmd = '\x1b[1A\x1b[2K'*(len(self.subInfo) + 3)
             self.move_cursor_up_cmd += '\x1b[1A' # move once more up since 'print' finishes the line
+            self.move_cursor_up_cmd += '\x1b[1A'
             print 'Status of unmerged files'
         else:
             print self.move_cursor_up_cmd
-            time.sleep(.2)  # 'blink'
+            time.sleep(.1)  # 'blink'
 
         print '%30s: %6s %6s %.6s'% ('Sample Name','Ready','#Files','[%]')
         readyFiles =0
 
         for process in self.subInfo:
-            print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*float(process.rootFileCounter)/float(process.numberOfFiles)), 'Done' if process.rootFileCounter == process.numberOfFiles else ''
+            status_message = ['\033[94m Working \033[0m','\033[92m Transfered \033[0m','Merging','Already Merged']
+            print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*float(process.rootFileCounter)/float(process.numberOfFiles)), status_message[process.status]
             readyFiles += process.rootFileCounter
         print 'Number of unmerged files: ',readyFiles,'/',self.totalFiles,'(%.3i)' % (100*(1-float(readyFiles)/float(self.totalFiles)))
     #take care of merging
@@ -212,7 +214,13 @@ class JobManager(object):
     #wait for every process to finish
     def merge_wait(self):
         self.merge.wait_till_finished()
-                               
+              
+    def get_subInfoFinish(self):
+        for process in self.subInfo:
+            if process.status==0 or process.status==1: 
+                return False
+        return True
+                 
 class MergeManager(object):
     def __init__(self,add,force,wait,onlyhist=False):
         self.add = add
@@ -239,10 +247,12 @@ class MergeManager(object):
             if not process.numberOfFiles == process.rootFileCounter:
                 continue
             if not os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root') or self.force:
-                if process.status ==0:
+                if process.status ==1 or self.force:
                     self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName,self.onlyhist))
-                    process.status = 1
-    
+                    process.status = 2
+            elif process.status !=2: 
+                process.status = 3
+
     def wait_till_finished(self):
         if not self.wait: return
         for process in self.active_process:
