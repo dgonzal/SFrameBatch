@@ -78,13 +78,14 @@ class SubInfo(object):
         self.name = name
         self.numberOfFiles =numberOfFiles #number of expected files
         self.data_type = data_type
-        self.rootFileCounter=0 #number of expected files 
+        self.rootFileCounter = 0 #number of expected files 
         self.status = 0
 	self.missingFiles = []
         self.pids = ['']*numberOfFiles
-        self.jobnum = [False]*numberOfFiles
         self.arrayPid = -1
-        self.resubmit = resubmit
+        self.resubmit = [resubmit]*numberOfFiles
+    def reset_resubmit(self,value):
+        self.resubmit =[value]*self.numberOfFiles
     def to_JSON(self):
         #print json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -102,6 +103,7 @@ class JobManager(object):
         self.missingFiles = -1
         self.move_cursor_up_cmd = None # pretty print status
         self.numOfResubmit =0
+        self.watch = None
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
@@ -115,93 +117,120 @@ class JobManager(object):
                     self.subInfo.append(found)
             if not found: 
                 self.subInfo.append(SubInfo(InputData[process].Version,write_all_xml(self.workdir+'/'+InputData[process].Version,processName,self.header,Job,self.workdir),InputData[process].Type))
-            self.totalFiles += self.subInfo[process].numberOfFiles
-            self.subInfo[process].resubmit = header.AutoResubmit #Reset the retries every time you start
-            write_script(processName[0],self.workdir,self.header)
+            if self.subInfo[-1].numberOfFiles == 0:
+                print 'Removing',self.subInfo[-1].name
+                self.subInfo.pop()
+            else:
+                self.totalFiles += self.subInfo[-1].numberOfFiles
+                self.subInfo[-1].reset_resubmit(self.header.AutoResubmit) #Reset the retries every time you start
+                write_script(processName[0],self.workdir,self.header)
     #submit the jobs to the batch as array job
     #the used function should soon return the pid of the job for killing and knowing if something failed
     def submit_jobs(self):
         for process in self.subInfo:
             process.arrayPid = submit_qsub(process.numberOfFiles,self.workdir+'/Stream_'+str(process.name),str(process.name),self.workdir)
             print 'Submitted jobs',process.name, 'pid', process.arrayPid
-            if process.status != 0:process.status =0
+            if process.status != 0:
+                process.status = 0
+                process.pids = ['']*process.numberOfFiles
+        self.watch = pidWatcher()
+        for process in self.subInfo:
+            i = 0
+            
+            for it in range(process.numberOfFiles):
+                while i<300 and self.watch.check_pidstatus(process.arrayPid,it+1)==0:
+                    time.sleep(1)
+                    self.watch = pidWatcher() 
+                    i+=1
+            if i==300:
+                print 'Seems something went wrong with the submission. Can not find PID on the batch for',process.name
+            if i<300:
+                print 'Job', process.name,'reached Batch'
     #resubmit the jobs see above      
     def resubmit_jobs(self):
-        watch = pidWatcher()
         proc_qstat = subprocess.Popen(['qstat'],stdout=subprocess.PIPE)
         qstat_out = proc_qstat.communicate()[0]
         ask = True
         for process in self.subInfo:
 	    for it in process.missingFiles:
-                status = -1
-                if process.jobnum[it-1]: 
-                    status = watch.check_pidstatus(process.pids[it-1],it)
+                batchstatus = -1
+                if process.pids[it-1]: 
+                    batchstatus = self.watch.check_pidstatus(process.pids[it-1],it)
                 else:
-                    status = watch.check_pidstatus(process.arrayPid,it)
+                    batchstatus = self.watch.check_pidstatus(process.arrayPid,it)
                 if qstat_out and status==-1 and ask:
                     print '\n' + qstat_out
                     res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
                     if res.lower() != 'y':
                         exit(0)
                     ask = False
-                if status != 1:
+                if batchstatus != 1:
                     process.pids[it-1] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
-                    process.jobnum[it-1] = True
                     print 'Resubmitted job',process.name,it, 'pid', process.pids[it-1]
                     if process.status != 0:process.status =0
+                    
     #see how many jobs finished, were copied to workdir 
-    def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = False):
-        watch = pidWatcher()
+    def check_jobstatus(self, OutputDirectory, nameOfCycle,remove = False, autoresubmit = True):
         missing = open(self.workdir+'/missing_files.txt','w+')
         missingRootFiles = 0 
         ListOfDict =[]
+        self.watch = pidWatcher()
         for i in xrange(len(self.subInfo)-1, -1, -1):
             process = self.subInfo[i]
             ListOfDict.append(process.to_JSON())
             if not process.missingFiles and process.status !=0: continue            
             rootFiles =0
-            status = -1
+            batchstatus = -1
 	    self.subInfo[i].missingFiles = []     
             for it in range(process.numberOfFiles):
                 #have a look at the pids with qstat
-                if process.jobnum[it]: 
-                    status = watch.check_pidstatus(process.pids[it],it+1)
+                if process.pids[it]: 
+                    batchstatus = self.watch.check_pidstatus(process.pids[it],it+1)
                 else:
-                    status = watch.check_pidstatus(process.arrayPid,it+1)
+                    batchstatus = self.watch.check_pidstatus(process.arrayPid,it+1)
                 #kill jobs with have an error state
-                if status == 2:
-                     if process.jobnum[it]: 
+                if batchstatus == 2:
+                     if process.pids[it]: 
                          subprocess.Popen(['qdel',str(process.pids[it])],stdout=subprocess.PIPE)
+                         batchstatus = -1
                      else:
                          subprocess.Popen(['qdel',str(process.arrayPid)+'.'+str(it)],stdout=subprocess.PIPE)
-                #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
-                if status==0 and process.status == 0 and (process.resubmit ==-1 or process.resubmit>0) and (process.jobnum[it] or process.arrayPid):
-                    process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
-                    if process.resubmit > 0 : 
-                        process.resubmit -= 1
-                    self.numOfResubmit +=1
-                    if float(self.numOfResubmit)/float(self.numberOfFiles) >.2:
-                        res = raw_input('More then 20% of jobs are died, do you really want to continue? Y/[N] ')
-                        if res.lower() != 'y':
-                            exit(0)
-                #If resubmits are used up go into failed
-                if status==0 and process.status == 0 and process.resubmit ==0:
-                    process.status = 5
-
+                         batchstatus = -1
                 #check if files have arrived 
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
-                if not os.path.exists(filename) or status==1:
+                if not os.path.exists(filename) or batchstatus==1:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
 		    self.subInfo[i].missingFiles.append(it+1)	
                     missingRootFiles +=1
+                    #batchstatus = -1
                 else:
                     rootFiles+=1
+                    batchstatus = -1
             process.rootFileCounter=rootFiles
             if not process.missingFiles and not process.status > 1:
                 process.status = 1
+            #remove from list of submission infor this is deprecated and will go soon
             if remove:
                 if os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root'):
                     del self.subInfo[i]
+
+            #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
+            #print process.name,'batch status',status, 'process status',process.status,'resubmit counter',process.resubmit[it], 'resubmit active',autoresubmit
+            if batchstatus==0 and (process.status == 0 or process.status == 4) and (process.resubmit[it] ==-1 or process.resubmit[it]>0) and (process.pids[it] or process.arrayPid) and autoresubmit:
+                if float(self.numOfResubmit)/float(self.totalFiles) >.10:
+                    res = raw_input('More then 10% of jobs are dead, do you really want to continue? Y/[N] ')
+                    if res.lower() != 'y':
+                        exit(0)
+                process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
+                batchstatus =-1
+                if process.resubmit[it] > 0 : 
+                    process.resubmit[it] -= 1
+                    self.numOfResubmit +=1
+                   
+            #If resubmits are used up go into failed
+            if batchstatus==0 and process.status == 0 and process.resubmit[it] ==0:
+                process.status = 4
+
         missing.close()
         self.missingFiles = missingRootFiles
         #Save/update pids and other information to json file, such that it can be loaded and used later
@@ -214,7 +243,7 @@ class JobManager(object):
         if not self.move_cursor_up_cmd:
             self.move_cursor_up_cmd = '\x1b[1A\x1b[2K'*(len(self.subInfo) + 3)
             self.move_cursor_up_cmd += '\x1b[1A' # move once more up since 'print' finishes the line
-            print 'Status of unmerged files'
+            print 'Status of files'
         else:
             print self.move_cursor_up_cmd
             time.sleep(.1)  # 'blink'
@@ -223,7 +252,8 @@ class JobManager(object):
         readyFiles =0
 
         for process in self.subInfo:
-            status_message = ['\033[94m Working \033[0m','\033[92m Transferred \033[0m','Merging','Already Merged','\033[93m Failed\033 [0m']
+            status_message = ['\033[94m Working \033[0m','\033[92m Transferred \033[0m','Merging','Already Merged','\033[91m Failed \033[0m']
+            #print process.status
             print '%30s: %6i %6i %.3i'% (process.name, process.rootFileCounter,process.numberOfFiles, 100*float(process.rootFileCounter)/float(process.numberOfFiles)), status_message[process.status]
             readyFiles += process.rootFileCounter
         print 'Number of files: ',readyFiles,'/',self.totalFiles,'(%.3i)' % (100*(1-float(readyFiles)/float(self.totalFiles)))
@@ -265,12 +295,11 @@ class MergeManager(object):
         for process in info:
             if not process.numberOfFiles == process.rootFileCounter:
                 continue
-            if not os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root') or self.force:
-                if process.status ==1 or self.force:
-                    self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName,self.onlyhist))
-                    process.status = 2
-            elif process.status !=2: 
-                process.status = 3
+            if (not os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root') and process.status!=2) or self.force:
+                self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName,self.onlyhist))
+                process.status = 2
+            #elif process.status !=2: 
+            #    process.status = 3
 
     def wait_till_finished(self):
         if not self.wait: return

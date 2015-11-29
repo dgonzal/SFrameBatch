@@ -123,6 +123,7 @@ class header(object):
         line = f.readline()
         self.header = []
         self.Version = []
+        self.AutoResubmit =0
         while '<JobConfiguration' not in line:
             self.header.append(line)
             line = f.readline()
@@ -130,7 +131,8 @@ class header(object):
                 self.ConfigParse = parseString(line).getElementsByTagName('ConfigParse')[0]
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
-                self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)
+                if self.ConfigParse.hasAttribute('AutoResubmit'):
+                    self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)                         
             if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value
@@ -147,7 +149,10 @@ def get_number_of_events(Job, Version):
             for name in entry:
                 if name.endswith('.root'):
                     f = ROOT.TFile(name)
-                    NEvents += f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                    try:
+                        NEvents += f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                    except:
+                        print name,'does not contain an InputTree'
                     f.Close()
     return NEvents
 
@@ -162,6 +167,9 @@ def write_all_xml(path,datasetName,header,Job,workdir):
 
     if NEventsBreak!=0 and FileSplit<=0:
         NEvents = get_number_of_events(Job, Version)
+        if(NEvents<=0): 
+            print Version[0],'has no InputTree'
+            return NFiles
         print '%s: %i events' % (Version[0], NEvents)
         NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
         SkipEvents = NEventsBreak

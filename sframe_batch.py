@@ -101,7 +101,7 @@ if __name__ == "__main__":
         manager.process_jobs(cycle.Cycle_InputData,Job)
         if options.submit: manager.submit_jobs()
         nameOfCycle = cycle.Cyclename.replace('::','.')
-        manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False)
+        manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False,False)
         if options.resubmit: manager.resubmit_jobs()
         #get once into the loop for resubmission
         loop_check = True #options.loop
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 time.sleep(10)
         #print 'Total progress', tot_prog
         manager.merge_wait()
-        manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
+        manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle,False,False)
         print '-'*80
         manager.print_status()
     stop = timeit.default_timer()

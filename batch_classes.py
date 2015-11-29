@@ -91,7 +91,7 @@ def resubmit(Stream,name,workdir,header):
 
 def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
     if os.path.exists(directory+name+'.root'):
-        call(['rm '+directory+name+'.root'], shell=True)
+        Call(['rm '+directory+name+'.root'], shell=True)
     string=''
     proc = None
     position = -1
