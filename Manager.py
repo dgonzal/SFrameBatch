@@ -158,7 +158,7 @@ class JobManager(object):
                     batchstatus = self.watch.check_pidstatus(process.pids[it-1],it)
                 else:
                     batchstatus = self.watch.check_pidstatus(process.arrayPid,it)
-                if qstat_out and status==-1 and ask:
+                if qstat_out and batchstatus==-1 and ask:
                     print '\n' + qstat_out
                     res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
                     if res.lower() != 'y':
