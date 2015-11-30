@@ -4,7 +4,14 @@ import ROOT
 
 def check_TreeExists(filename,treename):
      rootfile = ROOT.TFile.Open(filename)
-     rootTree = rootfile.Get(treename)
-     entries = rootTree.GetEntriesFast()
-     if entries == 0: return False
-     return True
+     #print filename
+     try:
+          rootTree = rootfile.Get(treename)
+          #print 'True'
+          return True
+     except:
+          #print 'False'
+          return False
+     #entries = rootTree.GetEntriesFast()
+     #if rootTree: return False
+     #return True
