@@ -137,15 +137,15 @@ class JobManager(object):
         for process in self.subInfo:
             i = 0
             for it in range(process.numberOfFiles):
-                while i<120 and self.watch.check_pidstatus(process.arrayPid,it+1)==0:
+                while i<100 and self.watch.check_pidstatus(process.arrayPid,it+1)==0:
                     time.sleep(1)
                     self.watch = pidWatcher() 
                     i+=1
-            if i==120:
+            if i==100:
                 print 'Can not find PID in the batch queue for',process.name+'.','The job(s) already finished or something went wrong.'
                 print 'Waited long enough that all jobs should be on the batch. Not going to wait any longer.'
                 return
-            elif i<120:
+            elif i<100:
                 print 'Job', process.name,'reached Batch'
     #resubmit the jobs see above      
     def resubmit_jobs(self):
