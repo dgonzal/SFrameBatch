@@ -44,9 +44,9 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
         root.appendChild(tempChild)
         # Set Attr.
         tempChild.setAttribute( 'Name', cycle.Cyclename)
-        if not os.path.exists(cycle.OutputDirectory+workdir+'/'):
-            os.makedirs(cycle.OutputDirectory+workdir+'/')
-        tempChild.setAttribute('OutputDirectory', cycle.OutputDirectory+workdir+'/')
+        if not os.path.exists(cycle.OutputDirectory+'/'+workdir+'/'):
+            os.makedirs(cycle.OutputDirectory+'/'+workdir+'/')
+        tempChild.setAttribute('OutputDirectory', cycle.OutputDirectory+'/'+workdir+'/')
         tempChild.setAttribute('PostFix', cycle.PostFix+'_'+str(NFile))
         tempChild.setAttribute('TargetLumi', cycle.TargetLumi)
         
