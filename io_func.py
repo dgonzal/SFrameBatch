@@ -50,6 +50,8 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
         tempChild.setAttribute('PostFix', cycle.PostFix+'_'+str(NFile))
         tempChild.setAttribute('TargetLumi', cycle.TargetLumi)
         
+        cycleLumiWeight = LumiWeight if cycle.usingSFrameWeight else 1.
+
         for p in range(len(cycle.Cycle_InputData)):
             version_check = True
             if(Version!=-1): 
@@ -63,7 +65,7 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
             InputGrandchild= doc.createElement('InputData')
             tempChild.appendChild(InputGrandchild)
             
-            InputGrandchild.setAttribute('Lumi', str(float(cycle.Cycle_InputData[p].Lumi)*LumiWeight))
+            InputGrandchild.setAttribute('Lumi', str(float(cycle.Cycle_InputData[p].Lumi)*cycleLumiWeight))
             InputGrandchild.setAttribute('Type', cycle.Cycle_InputData[p].Type)
             InputGrandchild.setAttribute('Version', cycle.Cycle_InputData[p].Version)
             if FileSplit!=-1:
