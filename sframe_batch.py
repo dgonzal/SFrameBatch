@@ -122,4 +122,9 @@ if __name__ == "__main__":
         print '-'*80
         manager.print_status()
     stop = timeit.default_timer()
-    print "SFrame Batch was running for",round(stop - start,2),"sec" 
+    print "SFrame Batch was running for",round(stop - start,2),"sec"
+    #exit gracefully
+    if all(si.status == 1 for si in manager.subInfo):
+        exit(0)  
+    else:
+        exit(-1)
