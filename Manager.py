@@ -107,6 +107,8 @@ class JobManager(object):
         self.move_cursor_up_cmd = None # pretty print status
         self.numOfResubmit =0
         self.watch = None
+        self.keepGoing = options.keepGoing
+        self.exitOnQuestion = options.exitOnQuestion
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
@@ -151,9 +153,12 @@ class JobManager(object):
                     batchstatus = self.watch.check_pidstatus(process.arrayPid,it)
                 if qstat_out and batchstatus==-1 and ask:
                     print '\n' + qstat_out
-                    res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
-                    if res.lower() != 'y':
-                        exit(0)
+                    if self.exitOnQuestion:
+                        exit(-1)
+                    elif not self.keepGoing:
+                        res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
+                        if res.lower() != 'y':
+                            exit(-1)
                     ask = False
                 if batchstatus != 1:
                     process.pids[it-1] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
@@ -166,6 +171,7 @@ class JobManager(object):
         missingRootFiles = 0 
         ListOfDict =[]
         self.watch = pidWatcher()
+        ask = True
         for i in xrange(len(self.subInfo)-1, -1, -1):
             process = self.subInfo[i]
             ListOfDict.append(process.to_JSON())
@@ -210,10 +216,14 @@ class JobManager(object):
                     (process.pids[it] or process.arrayPid) and
                     autoresubmit
                 ):
-                    if float(self.numOfResubmit)/float(self.totalFiles) >.10:
-                        res = raw_input('More then 10% of jobs are dead, do you really want to continue? Y/[N] ')
-                        if res.lower() != 'y':
-                            exit(0)
+                    if float(self.numOfResubmit)/float(self.totalFiles) >.10 and ask:
+                        if self.exitOnQuestion:
+                            exit(-1)
+                        elif not self.keepGoing:
+                            res = raw_input('More then 10% of jobs are dead, do you really want to continue? Y/[N] ')
+                            if res.lower() != 'y':
+                                exit(-1)
+                        ask = False
                     process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
                     process.reachedBatch[it] = False
                     batchstatus = -1
