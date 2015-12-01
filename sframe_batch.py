@@ -99,8 +99,8 @@ if __name__ == "__main__":
         print 'filling manager'
         manager = JobManager(options,header,workdir)
         manager.process_jobs(cycle.Cycle_InputData,Job)
-        if options.submit: manager.submit_jobs()
         nameOfCycle = cycle.Cyclename.replace('::','.')
+        if options.submit: manager.submit_jobs(cycle.OutputDirectory,nameOfCycle)
         manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False,False)
         if options.resubmit: manager.resubmit_jobs()
         #get once into the loop for resubmission
