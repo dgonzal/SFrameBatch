@@ -37,15 +37,15 @@ if __name__ == "__main__":
                       default=False,
                       help="Look which jobs finished and where transfered to your storage device.")
     parser.add_option("-a", "--addFiles",
-                     action="store_true",
-                     dest="add",
-                     default=False,
-                     help="hadd files to one") 
+                      action="store_true",
+                      dest="add",
+                      default=False,
+                      help="hadd files to one") 
     parser.add_option("-T", "--addFilesNoTree",
-                     action="store_true",
-                     dest="addNoTree",
-                     default=False,
-                     help="hadd files to one, without merging TTrees. Can be combined with -f.") 
+                      action="store_true",
+                      dest="addNoTree",
+                      default=False,
+                      help="hadd files to one, without merging TTrees. Can be combined with -f.") 
     parser.add_option("-f", "--forceMerge",
                       action="store_true", # optional because action defaults to "store"
                       dest="forceMerge",
@@ -56,6 +56,16 @@ if __name__ == "__main__":
                       dest="waitMerge",
                       default=False,
                       help="Wait for all merging subprocess to finish before exiting program. All the subprocesses that finish in the meantime become zombies until the main program finishes.")
+    parser.add_option("-k", "--keepGoing",
+                      action="store_true",
+                      dest="keepGoing",
+                      default=False,
+                      help="Never ask for user input, but keep going on.")
+    parser.add_option("-x", "--exitOnQuestion",
+                      action="store_true",
+                      dest="exitOnQuestion",
+                      default=False,
+                      help="Never ask for user input, but exit instead. (Overwrites keepGoing)")
     
     (options, args) = parser.parse_args()
     
@@ -99,8 +109,8 @@ if __name__ == "__main__":
         print 'filling manager'
         manager = JobManager(options,header,workdir)
         manager.process_jobs(cycle.Cycle_InputData,Job)
-        if options.submit: manager.submit_jobs()
         nameOfCycle = cycle.Cyclename.replace('::','.')
+        if options.submit: manager.submit_jobs(cycle.OutputDirectory,nameOfCycle)
         manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False,False)
         if options.resubmit: manager.resubmit_jobs()
         #get once into the loop for resubmission
@@ -122,4 +132,9 @@ if __name__ == "__main__":
         print '-'*80
         manager.print_status()
     stop = timeit.default_timer()
-    print "SFrame Batch was running for",round(stop - start,2),"sec" 
+    print "SFrame Batch was running for",round(stop - start,2),"sec"
+    #exit gracefully
+    if all(si.status == 1 for si in manager.subInfo):
+        exit(0)  
+    else:
+        exit(-1)

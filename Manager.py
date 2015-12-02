@@ -48,10 +48,10 @@ class pidWatcher(object):
             #if pid == self.pidList[i]:print pid,self.pidList[i], self.stateList[i],self.taskList[i],task 
             if str(self.pidList[i]) == str(pid) and (inrange or self.taskList[i]==-1):
                 if str(self.stateList[i]) == 'r' or str(self.stateList[i]) == 'qw' or str(self.stateList[i]) == 't':
-                    return 1
+                    return 1  # in the batch
                 else: 
-                    return 2
-        return 0
+                    return 2  # error state
+        return 0  # not available
 
 #JSON Format is used to store the submission information
 class HelpJSON:
@@ -79,11 +79,14 @@ class SubInfo(object):
         self.numberOfFiles =numberOfFiles #number of expected files
         self.data_type = data_type
         self.rootFileCounter = 0 #number of expected files 
-        self.status = 0
-	self.missingFiles = []
+        self.status = 0   # 0: init, 1: finished, >1: error
+        self.missingFiles = []
         self.pids = ['']*numberOfFiles
+        self.reachedBatch = [False]*numberOfFiles
+        self.jobsDone = [False]*numberOfFiles
         self.arrayPid = -1
         self.resubmit = [resubmit]*numberOfFiles
+        self.startingTime = 0
     def reset_resubmit(self,value):
         self.resubmit =[value]*self.numberOfFiles
     def to_JSON(self):
@@ -104,6 +107,8 @@ class JobManager(object):
         self.move_cursor_up_cmd = None # pretty print status
         self.numOfResubmit =0
         self.watch = None
+        self.keepGoing = options.keepGoing
+        self.exitOnQuestion = options.exitOnQuestion
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
@@ -127,33 +132,13 @@ class JobManager(object):
     #submit the jobs to the batch as array job
     #the used function should soon return the pid of the job for killing and knowing if something failed
     def submit_jobs(self,OutputDirectory,nameOfCycle):
-        starting_time = time.time()
         for process in self.subInfo:
+            process.startingTime = time.time()
             process.arrayPid = submit_qsub(process.numberOfFiles,self.workdir+'/Stream_'+str(process.name),str(process.name),self.workdir)
             print 'Submitted jobs',process.name, 'pid', process.arrayPid
             if process.status != 0:
                 process.status = 0
                 process.pids = ['']*process.numberOfFiles
-        self.watch = pidWatcher()
-        for process in self.subInfo:
-            i = 0
-            for it in range(process.numberOfFiles):
-                if process.resubmit[it]==0:
-                    return
-                while i<100 and self.watch.check_pidstatus(process.arrayPid,it+1)==0:
-                    filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
-                    if(os.path.exists(filename)):
-                        if(starting_time < os.path.getctime(filename)):
-                            break
-                    time.sleep(1)
-                    self.watch = pidWatcher() 
-                    i+=1
-            if i==100:
-                print 'Can not find PID in the batch queue for',process.name+'.','The job(s) already finished or something went wrong.'
-                print 'Waited long enough that all jobs should be on the batch. Not going to wait any longer.'
-                return
-            elif i<100:
-                print 'Job', process.name,'reached Batch'
     #resubmit the jobs see above      
     def resubmit_jobs(self):
         proc_qstat = subprocess.Popen(['qstat'],stdout=subprocess.PIPE)
@@ -168,9 +153,12 @@ class JobManager(object):
                     batchstatus = self.watch.check_pidstatus(process.arrayPid,it)
                 if qstat_out and batchstatus==-1 and ask:
                     print '\n' + qstat_out
-                    res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
-                    if res.lower() != 'y':
-                        exit(0)
+                    if self.exitOnQuestion:
+                        exit(-1)
+                    elif not self.keepGoing:
+                        res = raw_input('Some jobs are still running (see above). Do you really want to resubmit? Y/[N] ')
+                        if res.lower() != 'y':
+                            exit(-1)
                     ask = False
                 if batchstatus != 1:
                     process.pids[it-1] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
@@ -183,19 +171,22 @@ class JobManager(object):
         missingRootFiles = 0 
         ListOfDict =[]
         self.watch = pidWatcher()
+        ask = True
         for i in xrange(len(self.subInfo)-1, -1, -1):
             process = self.subInfo[i]
             ListOfDict.append(process.to_JSON())
             if not process.missingFiles and process.status !=0: continue            
             rootFiles =0
             batchstatus = -1
-	    self.subInfo[i].missingFiles = []     
+            self.subInfo[i].missingFiles = []
             for it in range(process.numberOfFiles):
                 #have a look at the pids with qstat
                 if process.pids[it]: 
                     batchstatus = self.watch.check_pidstatus(process.pids[it],it+1)
                 else:
                     batchstatus = self.watch.check_pidstatus(process.arrayPid,it+1)
+                if batchstatus == 1:
+                    process.reachedBatch[it] = True
                 #kill jobs with have an error state
                 if batchstatus == 2:
                      if process.pids[it]: 
@@ -206,22 +197,36 @@ class JobManager(object):
                          batchstatus = -1
                 #check if files have arrived 
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
-                if not os.path.exists(filename) or batchstatus==1:
+                if os.path.exists(filename) and process.startingTime < os.path.getctime(filename):
+                    process.jobsDone[it] = True
+                if batchstatus==1 or not process.jobsDone[it]:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
-		    self.subInfo[i].missingFiles.append(it+1)	
+                    self.subInfo[i].missingFiles.append(it+1)
                     missingRootFiles +=1
                 else:
                     rootFiles+=1
                     batchstatus = -1
                 #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
-                #print process.name,'batch status',batchstatus, 'process status',process.status,'resubmit counter',process.resubmit[it], 'resubmit active',autoresubmit
-                if batchstatus==0 and (process.status == 0 or process.status == 4) and (process.resubmit[it] ==-1 or process.resubmit[it]>0) and (process.pids[it] or process.arrayPid) and autoresubmit:
-                    if float(self.numOfResubmit)/float(self.totalFiles) >.10:
-                        res = raw_input('More then 10% of jobs are dead, do you really want to continue? Y/[N] ')
-                        if res.lower() != 'y':
-                            exit(0)
+                #print process.name,'batch status',batchstatus, 'process.reachedBatch',process.reachedBatch, 'process status',process.status,'resubmit counter',process.resubmit[it], 'resubmit active',autoresubmit
+                if (
+                    batchstatus==0 and
+                    (process.reachedBatch[it] and not process.jobsDone[it]) and
+                    (process.status == 0 or process.status == 4) and
+                    (process.resubmit[it] ==-1 or process.resubmit[it]>0) and
+                    (process.pids[it] or process.arrayPid) and
+                    autoresubmit
+                ):
+                    if float(self.numOfResubmit)/float(self.totalFiles) >.10 and ask:
+                        if self.exitOnQuestion:
+                            exit(-1)
+                        elif not self.keepGoing:
+                            res = raw_input('More then 10% of jobs are dead, do you really want to continue? Y/[N] ')
+                            if res.lower() != 'y':
+                                exit(-1)
+                        ask = False
                     process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
-                    batchstatus =-1
+                    process.reachedBatch[it] = False
+                    batchstatus = -1
                     if process.resubmit[it] > 0 : 
                         process.resubmit[it] -= 1
                         self.numOfResubmit +=1
