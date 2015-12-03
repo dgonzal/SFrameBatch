@@ -147,12 +147,17 @@ class header(object):
 def get_number_of_events(Job, Version):
     InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
     NEvents = 0
-    for entry in InputData.io_list.FileInfoList:
+    for entry in InputData.io_list.FileInfoList[:]:
             for name in entry:
                 if name.endswith('.root'):
                     f = ROOT.TFile(name)
                     try:
-                        NEvents += f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                        n = f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                        if n < 1:
+                            InputData.io_list.FileInfoList.remove(entry)
+                            break
+                        else:
+                            NEvents += n
                     except:
                         print name,'does not contain an InputTree'
                     f.Close()

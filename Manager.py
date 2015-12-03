@@ -231,8 +231,17 @@ class JobManager(object):
                         process.resubmit[it] -= 1
                         self.numOfResubmit +=1
                 #If resubmits are used up go into failed
-                if batchstatus==0 and process.status == 0 and process.resubmit[it] ==0:
+                if (
+                    batchstatus==0 and
+                    process.status == 0 and
+                    process.resubmit[it] == 0 and
+                    process.reachedBatch[it] and
+                    not process.jobsDone[it]
+                ):
                     process.status = 4
+
+            if all(process.jobsDone):
+                process.status = 1
 
             process.rootFileCounter=rootFiles
             if not process.missingFiles and not process.status > 1:
