@@ -230,6 +230,10 @@ class JobManager(object):
                     if process.resubmit[it] > 0 : 
                         process.resubmit[it] -= 1
                         self.numOfResubmit +=1
+                #recheck if the outputfile is present
+                time.sleep(0.2)
+                if os.path.exists(filename) and process.startingTime < os.path.getctime(filename):
+                    process.jobsDone[it] = True
                 #If resubmits are used up go into failed
                 if (
                     batchstatus==0 and
