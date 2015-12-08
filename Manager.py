@@ -260,14 +260,14 @@ class JobManager(object):
                     process.status = 4
 
             # final status updates
-            if all(process.jobsDone):
-                process.status = 1
             if (
                 process.status == 0 and
                 any(process.reachedBatch) and
                 not any(process.jobsRunning)  # basically set to error when nothing is running anymore
             ):
                 process.status = 4
+            if all(process.jobsDone):
+                process.status = 1
 
             process.rootFileCounter=rootFiles
             if not process.missingFiles and not process.status > 1:
