@@ -95,6 +95,7 @@ class SubInfo(object):
         self.missingFiles = []
         self.pids = ['']*numberOfFiles
         self.reachedBatch = [False]*numberOfFiles
+        self.jobsRunning = [False]*numberOfFiles
         self.jobsDone = [False]*numberOfFiles
         self.arrayPid = -1
         self.resubmit = [resubmit]*numberOfFiles
@@ -199,6 +200,9 @@ class JobManager(object):
                     batchstatus = self.watch.check_pidstatus(process.arrayPid,it+1)
                 if batchstatus == 1:
                     process.reachedBatch[it] = True
+                    process.jobsRunning[it] = True
+                else:
+                    process.jobsRunning[it] = False
                 #kill jobs with have an error state
                 if batchstatus == 2:
                     if process.pids[it]:
@@ -217,7 +221,6 @@ class JobManager(object):
                     missingRootFiles +=1
                 else:
                     rootFiles+=1
-                    batchstatus = -1
                 #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
                 #print process.name,'batch status',batchstatus, 'process.reachedBatch',process.reachedBatch, 'process status',process.status,'resubmit counter',process.resubmit[it], 'resubmit active',autoresubmit
                 if (
@@ -256,8 +259,15 @@ class JobManager(object):
                 ):
                     process.status = 4
 
+            # final status updates
             if all(process.jobsDone):
                 process.status = 1
+            if (
+                process.status == 0 and
+                any(process.reachedBatch) and
+                not any(process.jobsRunning)  # basically set to error when nothing is running anymore
+            ):
+                process.status = 4
 
             process.rootFileCounter=rootFiles
             if not process.missingFiles and not process.status > 1:
@@ -303,7 +313,7 @@ class JobManager(object):
     #see how many jobs finished (or error)
     def get_subInfoFinish(self):
         for process in self.subInfo:
-            if process.status==0 or process.status==1: 
+            if process.status==0:
                 return False
         return True
 #class to take care of merging (maybe rethink design)
