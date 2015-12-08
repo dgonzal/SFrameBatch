@@ -111,7 +111,7 @@ def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
     #print command_string+directory+name+'.root'+string
 
     if not string.isspace():
-        return
+        #return
         #fhadd(directory+name+'.root',fileContainer,"TH1")
         #print 'Merging',name+'.root'
         proc = Popen([command_string+directory+name+'.root'+string], shell=True,stdout=PIPE)
