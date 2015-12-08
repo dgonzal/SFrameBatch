@@ -90,8 +90,8 @@ def resubmit(Stream,name,workdir,header):
     return proc_qstat.communicate()[0].split()[2]
 
 def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
-    #if os.path.exists(directory+name+'.root'):
-        #call(['rm '+directory+name+'.root'], shell=True)
+    if os.path.exists(directory+name+'.root'):
+        call(['rm '+directory+name+'.root'], shell=True)
     string=''
     proc = None
     position = -1
@@ -108,13 +108,13 @@ def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
         if not position == i:
             string += ' '+directory+workdir+'/'+name+'_'+str(i)+'.root'
 
-    print command_string+directory+name+'.root'+string
+    #print command_string+directory+name+'.root'+string
 
     if not string.isspace():
         return
         #fhadd(directory+name+'.root',fileContainer,"TH1")
         #print 'Merging',name+'.root'
-        #proc = Popen([command_string+directory+name+'.root'+string], shell=True,stdout=PIPE)
+        proc = Popen([command_string+directory+name+'.root'+string], shell=True,stdout=PIPE)
     else:
         print 'Nothing to merge for',name+'.root'
     return proc 
