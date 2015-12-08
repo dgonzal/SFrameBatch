@@ -7,6 +7,7 @@ from Inf_Classes import *
 
 import os
 import subprocess
+import itertools
 import datetime
 import json
 import time
@@ -36,13 +37,24 @@ class pidWatcher(object):
                 self.taskList.append(taskvalue)
             else:
                 self.taskList.append(-1)
+
+        self.pidTaskList = [''] * len(self.pidList)
+        for i in range(len(self.pidList)):
+            inrange = False
+            if ':' in str(self.taskList[i]):
+                splitted_string = str(self.taskList[i].split(':')[0])
+                splitted_strings = splitted_string.split(',')
+                splitted_at_hyphen = list(s.split('-') for s in splitted_strings)
+                int_list_of_lists = list(range(int(s[0]), int(s[1])+1) if len(s) > 1 else [int(s[0])] for s in splitted_at_hyphen)
+                int_list = list(itertools.chain.from_iterable(int_list_of_lists))
+                self.pidTaskList[i] = int_list
+
             
     def check_pidstatus(self,pid,task):
         for i in range(len(self.pidList)):
             inrange = False
             if ':' in str(self.taskList[i]):
-                splitted_string = (str(self.taskList[i].split(':')[0])).split('-')
-                inrange = int(splitted_string[0]) >= int(task) and  int(splitted_string[1]) <= int(task)
+                inrange = int(task) in self.pidTaskList[i]
             else:
                 inrange = str(self.taskList[i])==str(task)
             #if pid == self.pidList[i]:print pid,self.pidList[i], self.stateList[i],self.taskList[i],task 
@@ -83,6 +95,7 @@ class SubInfo(object):
         self.missingFiles = []
         self.pids = ['']*numberOfFiles
         self.reachedBatch = [False]*numberOfFiles
+        self.jobsRunning = [False]*numberOfFiles
         self.jobsDone = [False]*numberOfFiles
         self.arrayPid = -1
         self.resubmit = [resubmit]*numberOfFiles
@@ -187,14 +200,17 @@ class JobManager(object):
                     batchstatus = self.watch.check_pidstatus(process.arrayPid,it+1)
                 if batchstatus == 1:
                     process.reachedBatch[it] = True
+                    process.jobsRunning[it] = True
+                else:
+                    process.jobsRunning[it] = False
                 #kill jobs with have an error state
                 if batchstatus == 2:
-                     if process.pids[it]: 
-                         subprocess.Popen(['qdel',str(process.pids[it])],stdout=subprocess.PIPE)
-                         batchstatus = -1
-                     else:
-                         subprocess.Popen(['qdel',str(process.arrayPid)+'.'+str(it)],stdout=subprocess.PIPE)
-                         batchstatus = -1
+                    if process.pids[it]:
+                        subprocess.Popen(['qdel',str(process.pids[it])],stdout=subprocess.PIPE)
+                        batchstatus = -1
+                    else:
+                        subprocess.Popen(['qdel',str(process.arrayPid)+'.'+str(it+1)],stdout=subprocess.PIPE)
+                        batchstatus = -1
                 #check if files have arrived 
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
                 if os.path.exists(filename) and process.startingTime < os.path.getctime(filename):
@@ -205,7 +221,6 @@ class JobManager(object):
                     missingRootFiles +=1
                 else:
                     rootFiles+=1
-                    batchstatus = -1
                 #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
                 #print process.name,'batch status',batchstatus, 'process.reachedBatch',process.reachedBatch, 'process status',process.status,'resubmit counter',process.resubmit[it], 'resubmit active',autoresubmit
                 if (
@@ -244,6 +259,13 @@ class JobManager(object):
                 ):
                     process.status = 4
 
+            # final status updates
+            if (
+                process.status == 0 and
+                any(process.reachedBatch) and
+                not any(process.jobsRunning)  # basically set to error when nothing is running anymore
+            ):
+                process.status = 4
             if all(process.jobsDone):
                 process.status = 1
 
@@ -291,7 +313,7 @@ class JobManager(object):
     #see how many jobs finished (or error)
     def get_subInfoFinish(self):
         for process in self.subInfo:
-            if process.status==0 or process.status==1: 
+            if process.status==0:
                 return False
         return True
 #class to take care of merging (maybe rethink design)
