@@ -7,6 +7,7 @@ from Inf_Classes import *
 
 import os
 import subprocess
+import itertools
 import datetime
 import json
 import time
@@ -36,13 +37,24 @@ class pidWatcher(object):
                 self.taskList.append(taskvalue)
             else:
                 self.taskList.append(-1)
+
+        self.pidTaskList = [''] * len(self.pidList)
+        for i in range(len(self.pidList)):
+            inrange = False
+            if ':' in str(self.taskList[i]):
+                splitted_string = str(self.taskList[i].split(':')[0])
+                splitted_strings = splitted_string.split(',')
+                splitted_at_hyphen = list(s.split('-') for s in splitted_strings)
+                int_list_of_lists = list(range(int(s[0]), int(s[1])+1) if len(s) > 1 else [int(s[0])] for s in splitted_at_hyphen)
+                int_list = list(itertools.chain.from_iterable(int_list_of_lists))
+                self.pidTaskList[i] = int_list
+
             
     def check_pidstatus(self,pid,task):
         for i in range(len(self.pidList)):
             inrange = False
             if ':' in str(self.taskList[i]):
-                splitted_string = (str(self.taskList[i].split(':')[0])).split('-')
-                inrange = int(splitted_string[0]) >= int(task) and  int(splitted_string[1]) <= int(task)
+                inrange = int(task) in self.pidTaskList[i]
             else:
                 inrange = str(self.taskList[i])==str(task)
             #if pid == self.pidList[i]:print pid,self.pidList[i], self.stateList[i],self.taskList[i],task 
