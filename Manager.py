@@ -201,12 +201,12 @@ class JobManager(object):
                     process.reachedBatch[it] = True
                 #kill jobs with have an error state
                 if batchstatus == 2:
-                     if process.pids[it]: 
-                         subprocess.Popen(['qdel',str(process.pids[it])],stdout=subprocess.PIPE)
-                         batchstatus = -1
-                     else:
-                         subprocess.Popen(['qdel',str(process.arrayPid)+'.'+str(it)],stdout=subprocess.PIPE)
-                         batchstatus = -1
+                    if process.pids[it]:
+                        subprocess.Popen(['qdel',str(process.pids[it])],stdout=subprocess.PIPE)
+                        batchstatus = -1
+                    else:
+                        subprocess.Popen(['qdel',str(process.arrayPid)+'.'+str(it+1)],stdout=subprocess.PIPE)
+                        batchstatus = -1
                 #check if files have arrived 
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
                 if os.path.exists(filename) and process.startingTime < os.path.getctime(filename):
