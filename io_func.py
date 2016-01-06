@@ -44,12 +44,14 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
         root.appendChild(tempChild)
         # Set Attr.
         tempChild.setAttribute( 'Name', cycle.Cyclename)
-        if not os.path.exists(cycle.OutputDirectory+workdir+'/'):
-            os.makedirs(cycle.OutputDirectory+workdir+'/')
-        tempChild.setAttribute('OutputDirectory', cycle.OutputDirectory+workdir+'/')
+        if not os.path.exists(cycle.OutputDirectory+'/'+workdir+'/'):
+            os.makedirs(cycle.OutputDirectory+'/'+workdir+'/')
+        tempChild.setAttribute('OutputDirectory', cycle.OutputDirectory+'/'+workdir+'/')
         tempChild.setAttribute('PostFix', cycle.PostFix+'_'+str(NFile))
         tempChild.setAttribute('TargetLumi', cycle.TargetLumi)
         
+        cycleLumiWeight = LumiWeight if cycle.usingSFrameWeight else 1.
+
         for p in range(len(cycle.Cycle_InputData)):
             version_check = True
             if(Version!=-1): 
@@ -63,7 +65,7 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
             InputGrandchild= doc.createElement('InputData')
             tempChild.appendChild(InputGrandchild)
             
-            InputGrandchild.setAttribute('Lumi', str(float(cycle.Cycle_InputData[p].Lumi)*LumiWeight))
+            InputGrandchild.setAttribute('Lumi', str(float(cycle.Cycle_InputData[p].Lumi)*cycleLumiWeight))
             InputGrandchild.setAttribute('Type', cycle.Cycle_InputData[p].Type)
             InputGrandchild.setAttribute('Version', cycle.Cycle_InputData[p].Version)
             if FileSplit!=-1:
@@ -123,6 +125,7 @@ class header(object):
         line = f.readline()
         self.header = []
         self.Version = []
+        self.AutoResubmit =0
         while '<JobConfiguration' not in line:
             self.header.append(line)
             line = f.readline()
@@ -130,6 +133,8 @@ class header(object):
                 self.ConfigParse = parseString(line).getElementsByTagName('ConfigParse')[0]
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
+                if self.ConfigParse.hasAttribute('AutoResubmit'):
+                    self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)                         
             if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value
@@ -142,11 +147,19 @@ class header(object):
 def get_number_of_events(Job, Version):
     InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
     NEvents = 0
-    for entry in InputData.io_list.FileInfoList:
+    for entry in InputData.io_list.FileInfoList[:]:
             for name in entry:
                 if name.endswith('.root'):
                     f = ROOT.TFile(name)
-                    NEvents += f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                    try:
+                        n = f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                        if n < 1:
+                            InputData.io_list.FileInfoList.remove(entry)
+                            break
+                        else:
+                            NEvents += n
+                    except:
+                        print name,'does not contain an InputTree'
                     f.Close()
     return NEvents
 
@@ -161,6 +174,9 @@ def write_all_xml(path,datasetName,header,Job,workdir):
 
     if NEventsBreak!=0 and FileSplit<=0:
         NEvents = get_number_of_events(Job, Version)
+        if(NEvents<=0): 
+            print Version[0],'has no InputTree'
+            return NFiles
         print '%s: %i events' % (Version[0], NEvents)
         NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
         SkipEvents = NEventsBreak

@@ -49,8 +49,11 @@ class Cycle(object):
                     if(attr[0]=='Name'): name=attr[1]
                     if(attr[0]=='Value'): value=attr[1]
                 self.Cycle_UserConf.append(UserConfig(name,value))
-            
+
         #print self.Cycle_UserConf
+        UC_sframe_weight = filter(lambda uc: uc.Name == 'use_sframe_weight', self.Cycle_UserConf)
+        self.usingSFrameWeight = not (UC_sframe_weight and UC_sframe_weight[0].Value == 'false')
+
 
 class InputData(object):
     def __init__(self,node,cacheMe):
