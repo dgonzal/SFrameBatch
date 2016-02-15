@@ -13,7 +13,7 @@ import subprocess
 #import multiprocessing
 from Manager import *
 
-if __name__ == "__main__":
+def SFrameBatchMain(input_options):
     parser = OptionParser(usage="usage: %prog [options] filename",
                           version="%prog 0.2")
     parser.add_option("-w", "--workdir",
@@ -21,6 +21,11 @@ if __name__ == "__main__":
                       dest="workdir",
                       default="",
                       help="Overwrite the place where to store overhead.")
+    parser.add_option("-o", "--outputdir",
+                      action="store",
+                      dest="outputdir",
+                      default="",
+                      help="Overwrite the place where to store the output.")
     parser.add_option("-s", "--submit",
                       action="store_true", # optional because action defaults to "store"
                       dest="submit",
@@ -66,11 +71,18 @@ if __name__ == "__main__":
                       dest="exitOnQuestion",
                       default=False,
                       help="Never ask for user input, but exit instead. (Overwrites keepGoing)")
+    parser.add_option("--ReplaceUserItem",
+                      action="append",
+                      dest="useritemlist", 
+                      default=[],
+                      help="Replace Items in UserConfig, for more then one just add as many times the command as you need. Nice for uncertainties. Usage --ReplaceUserItem \"Name,Value\""
+                      )
     
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(input_options)
     
-
     start = timeit.default_timer()
+
+    #global header
 
     if len(args) != 1:
         parser.error("wrong number of arguments help can be invoked with --help")
@@ -79,7 +91,8 @@ if __name__ == "__main__":
     if os.path.islink(xmlfile):
         xmlfile = os.path.abspath(os.readlink(xmlfile))
     # softlink JobConfig.dtd into current directory
-    scriptpath = os.path.realpath(__file__)[:-15]
+    # the len(arg) makes it undependet if the .py or .pyc is used
+    scriptpath = os.path.realpath(__file__)[:-len(os.path.realpath(__file__).split("/")[-1])]
     if not os.path.exists('JobConfig.dtd'):
         os.system('ln -sf %s/JobConfig.dtd .' % scriptpath)
 
@@ -88,13 +101,16 @@ if __name__ == "__main__":
     xmlfile_strio = StringIO.StringIO(proc_xmllint.communicate()[0])
     sax_parser = xml.sax.make_parser()
     xmlparsed = parse(xmlfile_strio,sax_parser)
-    header = header(xmlfile)
+    header = fileheader(xmlfile)
     node = xmlparsed.getElementsByTagName('JobConfiguration')[0]
     Job = JobConfig(node)
 
     workdir = header.Workdir
-    if options.workdir : workdir = options.workdir
+    if options.workdir:
+        print "Overwriting workdir:",workdir,"with",options.workdir
+        workdir = options.workdir
     if not workdir : workdir="workdir"
+    #if not workdir.endswith("/"): workdir += "/" 
     currentDir = os.getcwd()
     if not os.path.exists(workdir+'/'):
         os.makedirs(workdir+'/')
@@ -104,8 +120,26 @@ if __name__ == "__main__":
     #print header.Version[0]
 
     for cycle in Job.Job_Cylce:
+        if len(options.outputdir)>0:
+            print 'Overwriting',cycle.OutputDirectory,'with',options.outputdir
+            cycle.OutputDirectory=options.outputdir
+            if not cycle.OutputDirectory.endswith("/"): cycle.OutputDirectory +="/"
         if cycle.OutputDirectory.startswith('./'):             
             cycle.OutputDirectory = currentDir+cycle.OutputDirectory[1:]
+        if len(options.useritemlist)>0 : 
+            print 'Searching to replace UserConfig Values'
+            for item in options.useritemlist:
+                if ',' not in item:
+                    print 'No , found in the substitution:',item
+                    continue
+                else:                
+                    pair_name_value = item.split(",")
+                    item_name = pair_name_value[0]
+                    item_value = pair_name_value[1]
+                    for cycle_item in cycle.Cycle_UserConf:
+                        if item_name == cycle_item.Name:
+                            print "Replacing",item_name,"Value:",cycle_item.Value ,"with",item_value
+                            cycle_item.Value = item_value
         print 'filling manager'
         manager = JobManager(options,header,workdir)
         manager.process_jobs(cycle.Cycle_InputData,Job)
@@ -113,18 +147,24 @@ if __name__ == "__main__":
         if options.submit: manager.submit_jobs(cycle.OutputDirectory,nameOfCycle)
         manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False,False)
         if options.resubmit: manager.resubmit_jobs()
-        #get once into the loop for resubmission
-        loop_check = True #options.loop
+        #get once into the loop for resubmission & merging
+        loop_check = True 
         while loop_check==True:   
-            if not options.loop:loop_check = False
+            if not options.loop:
+                loop_check = False
+                # This is necessary since qstat sometimes does not find the jobs it should monitor.
+                # So it checks that it does not find the job 5 times before auto resubmiting it.
+                for i in range(6):
+                    manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)       
+            else:
+                manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
+               
             manager.merge_files(cycle.OutputDirectory,nameOfCycle,cycle.Cycle_InputData)
-            manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
             if manager.get_subInfoFinish() or (not manager.merge.get_mergerStatus() and manager.missingFiles==0):
                 print 'if grid pid information got lost root Files could still be transferring'
                 break
             if options.loop: 
                 manager.print_status()
-                print '='*80
                 time.sleep(5)
         #print 'Total progress', tot_prog
         manager.merge_wait()
@@ -134,7 +174,13 @@ if __name__ == "__main__":
     stop = timeit.default_timer()
     print "SFrame Batch was running for",round(stop - start,2),"sec"
     #exit gracefully
+
     if all(si.status == 1 for si in manager.subInfo):
-        exit(0)  
+        return 0
     else:
-        exit(-1)
+        return -1
+
+
+if __name__ == "__main__":
+    status = SFrameBatchMain(sys.argv[1:])
+    exit(status)
