@@ -119,7 +119,7 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
     return root.toprettyxml()
 
 
-class header(object):
+class fileheader(object):
     def __init__(self,xmlfile):
         f = open(xmlfile)
         line = f.readline()

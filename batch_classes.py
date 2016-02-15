@@ -99,7 +99,7 @@ def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
     if onlyhists: command_string += '-T '
     if(outputTree):
         for i in range(NFiles):
-            if check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
+            if check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree) and position ==-1:
                 position = i
                 string+=' '+directory+workdir+'/'+name+'_'+str(i)+'.root'
                 break
@@ -111,9 +111,6 @@ def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
     #print command_string+directory+name+'.root'+string
 
     if not string.isspace():
-        #return
-        #fhadd(directory+name+'.root',fileContainer,"TH1")
-        #print 'Merging',name+'.root'
         proc = Popen([command_string+directory+name+'.root'+string], shell=True,stdout=PIPE)
     else:
         print 'Nothing to merge for',name+'.root'
