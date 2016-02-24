@@ -13,6 +13,7 @@ import xml.sax
 import math
 import time
 import ROOT
+import copy
 
 #my classes
 from Inf_Classes import *
@@ -44,10 +45,13 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
         root.appendChild(tempChild)
         # Set Attr.
         tempChild.setAttribute( 'Name', cycle.Cyclename)
-        if not os.path.exists(cycle.OutputDirectory+'/'+workdir+'/'):
+
+        if not os.path.exists(cycle.OutputDirectory+'/'+workdir+'/') and "__NOTSET__" not in cycle.OutputDirectory:
             os.makedirs(cycle.OutputDirectory+'/'+workdir+'/')
         tempChild.setAttribute('OutputDirectory', cycle.OutputDirectory+'/'+workdir+'/')
-        tempChild.setAttribute('PostFix', cycle.PostFix+'_'+str(NFile))
+    
+        if NFile is not None  and NFile is not -1:
+            tempChild.setAttribute('PostFix', cycle.PostFix+'_'+str(NFile))
         tempChild.setAttribute('TargetLumi', cycle.TargetLumi)
         
         cycleLumiWeight = LumiWeight if cycle.usingSFrameWeight else 1.
@@ -104,8 +108,6 @@ def write_job(Job,Version=-1,SkipEvents=0,MaxEvents=-1,NFile=None, FileSplit=-1,
             InputGrandchild.appendChild(Datachild)
             Datachild.setAttribute(cycle.Cycle_InputData[p].io_list.InputTree[1],cycle.Cycle_InputData[p].io_list.InputTree[2])
            
-                
-
         #InGrandGrandchild= doc.createElement('In')
         ConfigGrandchild  = doc.createElement('UserConfig')
         tempChild.appendChild(ConfigGrandchild)
@@ -144,7 +146,7 @@ class fileheader(object):
                 self.Workdir = self.ConfigSGE.attributes['Workdir'].value
         f.close()   
 
-def get_number_of_events(Job, Version):
+def get_number_of_events(Job, Version, atleastOneEvent = False):
     InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
     NEvents = 0
     for entry in InputData.io_list.FileInfoList[:]:
@@ -158,6 +160,10 @@ def get_number_of_events(Job, Version):
                             break
                         else:
                             NEvents += n
+                            
+                            if atleastOneEvent: 
+                                f.Close()
+                                return 1
                     except:
                         print name,'does not contain an InputTree'
                     f.Close()
@@ -174,7 +180,7 @@ def write_all_xml(path,datasetName,header,Job,workdir):
 
     if NEventsBreak!=0 and FileSplit<=0:
         NEvents = get_number_of_events(Job, Version)
-        if(NEvents<=0): 
+        if NEvents<=0: 
             print Version[0],'has no InputTree'
             return NFiles
         print '%s: %i events' % (Version[0], NEvents)
@@ -196,6 +202,10 @@ def write_all_xml(path,datasetName,header,Job,workdir):
  
     elif FileSplit>0:
         for entry in Version:
+            NEvents = get_number_of_events(Job,[entry], True)
+            if NEvents <= 0:
+                print 'No entries found for', entry,'. Going to ignore this.'
+                continue
             print 'Splitting job by files',entry
             for cycle in Job.Job_Cylce:
                 for p in range(len(cycle.Cycle_InputData)):
@@ -207,8 +217,6 @@ def write_all_xml(path,datasetName,header,Job,workdir):
                             outfile.write(write_job(Job,Version,0,-1,it,FileSplit,workdir))
                             outfile.close()
                             NFiles+=1
- 
-
     else:
         NFiles+=1
         outfile = open(path+'_OneCore'+'.xml','w+')
@@ -218,6 +226,51 @@ def write_all_xml(path,datasetName,header,Job,workdir):
         outfile.close()
 
     return NFiles
+
+
+def result_info(Job, path, header, other = []):
+    #get a xml file with all the infomartion that you need to proced
+    ResultJob = copy.deepcopy(Job)
+    for cycle in ResultJob.Job_Cylce:
+        for inputdata in cycle.Cycle_InputData:
+            #print inputdata.io_list.InputTree
+            #print inputdata.io_list.other
+            output_exist = False
+            other_index = 0
+            for listoflists in inputdata.io_list.other:
+                for part in listoflists:
+                    if part == 'OutputTree':
+                        output_exist = True
+                        break
+                    other_index +=1
+            if not output_exist:
+                return 0
+            inputdata.io_list.FileInfoList = [['In','Lumi',inputdata.io_list.FileInfoList[0][2],'FileName',cycle.OutputDirectory+"/"+path+"/uhh2.AnalysisModuleRunner.*."+inputdata.Version+"_*.root"]]
+            inputdata.io_list.InputTree  =['InputTree','Name',inputdata.io_list.other[other_index][2]]
+            if not other:
+                inputdata.io_list.other = []
+            else:
+                if len(other) == 1:
+                    if other[0] =="-1":
+                        inputdata.io_list.other = [['OutputTree','Name',inputdata.io_list.other[other_index][2]]]
+                    else:
+                        inputdata.io_list.other = [['OutputTree','Name',other[0]]]  
+                else:
+                    inputdata.io_list.other = other
+            
+        for cycle_item in cycle.Cycle_UserConf:
+            if cycle_item.Name == 'AnalysisModule':
+                cycle_item.Value = "__NOTSET__"
+        cycle.OutputDirectory = "__NOTSET__"
+
+    outfile = open(path+'/Result.xml','w')
+    for line in header.header:
+        outfile.write(line)
+    outfile.write(write_job(ResultJob,-1,0,-1,None,0,""))
+    outfile.close()
+    
+    return 1
+
 
 
 

@@ -77,6 +77,13 @@ def SFrameBatchMain(input_options):
                       default=[],
                       help="Replace Items in UserConfig, for more then one just add as many times the command as you need. Nice for uncertainties. Usage --ReplaceUserItem \"Name,Value\""
                       )
+    parser.add_option("--addTree",
+                      action="append",
+                      dest="sframeTreeInfo",
+                      default=[],
+                      help="This is used if you need to add something to all the InputData Childs (e.g an OutputTree) in the Result.xml file. If only one argument is passed it is assumed to be the name of the OutputTree."
+                      )
+
     
     (options, args) = parser.parse_args(input_options)
     
@@ -104,7 +111,7 @@ def SFrameBatchMain(input_options):
     header = fileheader(xmlfile)
     node = xmlparsed.getElementsByTagName('JobConfiguration')[0]
     Job = JobConfig(node)
-
+    
     workdir = header.Workdir
     if options.workdir:
         print "Overwriting workdir:",workdir,"with",options.workdir
@@ -144,6 +151,10 @@ def SFrameBatchMain(input_options):
         manager = JobManager(options,header,workdir)
         manager.process_jobs(cycle.Cycle_InputData,Job)
         nameOfCycle = cycle.Cyclename.replace('::','.')
+        #this small function creates a xml file with the expected files 
+        if result_info(Job, workdir, header,options.sframeTreeInfo) == 1: 
+            print ' Result.xml created for further jobs'
+        #submit jobs if asked for
         if options.submit: manager.submit_jobs(cycle.OutputDirectory,nameOfCycle)
         manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False,False)
         if options.resubmit: manager.resubmit_jobs()
