@@ -128,6 +128,7 @@ class fileheader(object):
         self.header = []
         self.Version = []
         self.AutoResubmit =0
+        self.MaxJobsPerProcess = -1
         while '<JobConfiguration' not in line:
             self.header.append(line)
             line = f.readline()
@@ -136,7 +137,9 @@ class fileheader(object):
                 self.NEventsBreak = int(self.ConfigParse.attributes['NEventsBreak'].value)
                 self.FileSplit = int(self.ConfigParse.attributes['FileSplit'].value)
                 if self.ConfigParse.hasAttribute('AutoResubmit'):
-                    self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)                         
+                    self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)
+                if self.ConfigParse.hasAttribute('MaxJobsPerProcess'):
+                    self.MaxJobsPerProcess = int(self.ConfigParse.attributes['MaxJobsPerProcess'].value)
             if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value
@@ -149,6 +152,8 @@ class fileheader(object):
 def get_number_of_events(Job, Version, atleastOneEvent = False):
     InputData = filter(lambda inp: inp.Version==Version[0], Job.Job_Cylce[0].Cycle_InputData)[0]
     NEvents = 0
+    if len(InputData.io_list.FileInfoList[:])<5:
+        atleastOneEvent=False
     for entry in InputData.io_list.FileInfoList[:]:
             for name in entry:
                 if name.endswith('.root'):
@@ -160,7 +165,6 @@ def get_number_of_events(Job, Version, atleastOneEvent = False):
                             break
                         else:
                             NEvents += n
-                            
                             if atleastOneEvent: 
                                 f.Close()
                                 return 1
@@ -172,7 +176,7 @@ def get_number_of_events(Job, Version, atleastOneEvent = False):
 def write_all_xml(path,datasetName,header,Job,workdir):
     NEventsBreak= header.NEventsBreak
     FileSplit=header.FileSplit
-
+    MaxJobs = header.MaxJobsPerProcess
     NFiles=0
 
     Version =datasetName
@@ -204,17 +208,27 @@ def write_all_xml(path,datasetName,header,Job,workdir):
         for entry in Version:
             NEvents = get_number_of_events(Job,[entry], True)
             if NEvents <= 0:
-                print 'No entries found for', entry,'. Going to ignore this.'
+                print 'No entries found for',entry,'Going to ignore this sample.'
                 continue
             print 'Splitting job by files',entry
             for cycle in Job.Job_Cylce:
                 for p in range(len(cycle.Cycle_InputData)):
                     if(cycle.Cycle_InputData[p].Version==entry) or Version ==-1:
-                        for it in range(int(math.ceil(float(len(cycle.Cycle_InputData[p].io_list.FileInfoList))/FileSplit))):
+		        Total_xml = len(cycle.Cycle_InputData[p].io_list.FileInfoList)
+                        numberOfJobs = int(math.ceil(float(Total_xml)/FileSplit))
+                        numberOfSplits = FileSplit
+                        if numberOfJobs > MaxJobs and not MaxJobs ==-1:
+                            numberOfJobs = MaxJobs;
+                            numberOfSplits = int(math.ceil(float(Total_xml)/MaxJobs))
+                            print 'Too many Jobs, changing FileSplit mode'
+                            print 'Max number of Jobs',numberOfJobs,'Number of xml-Files per Job',numberOfSplits
+
+                        for it in range(numberOfJobs):
+			    if (it+1)*numberOfSplits > Total_xml: break
                             outfile = open(path+'_'+str(it+1)+'.xml','w+')
                             for line in header.header:
                                 outfile.write(line)
-                            outfile.write(write_job(Job,Version,0,-1,it,FileSplit,workdir))
+                            outfile.write(write_job(Job,Version,0,-1,it,numberOfSplits,workdir))
                             outfile.close()
                             NFiles+=1
     else:
