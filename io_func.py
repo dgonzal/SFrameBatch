@@ -189,8 +189,12 @@ def write_all_xml(path,datasetName,header,Job,workdir):
             return NFiles
         print '%s: %i events' % (Version[0], NEvents)
         NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
+        if NFiles > MaxJobs and not MaxJobs > 0:
+            print 'Too many Jobs, changing NEventsBreak mode'
+            print 'Max number of Jobs',MaxJobs,'Number of xml-Files per Job',NFiles
+            NEventsBreak = int(math.ceil(NEvents/float(MaxJobs)))
         SkipEvents = NEventsBreak
-        MaxEvents = NEventsBreak
+        MaxEvents = NEventsBreak   
 
         for i in xrange(NFiles):
             if i*SkipEvents >= NEvents:
@@ -217,14 +221,14 @@ def write_all_xml(path,datasetName,header,Job,workdir):
 		        Total_xml = len(cycle.Cycle_InputData[p].io_list.FileInfoList)
                         numberOfJobs = int(math.ceil(float(Total_xml)/FileSplit))
                         numberOfSplits = FileSplit
-                        if numberOfJobs > MaxJobs and not MaxJobs ==-1:
-                            numberOfJobs = MaxJobs;
+                        if numberOfJobs > MaxJobs and MaxJobs >0 :
                             numberOfSplits = int(math.ceil(float(Total_xml)/MaxJobs))
-                            print 'Too many Jobs, changing FileSplit mode'
-                            print 'Max number of Jobs',numberOfJobs,'Number of xml-Files per Job',numberOfSplits
+                            numberOfJobs = int(math.ceil(float(Total_xml)/numberOfSplits))
+                            print 'More than Jobs',MaxJobs,'changing FileSplit mode'
+                            print 'New number of Jobs',numberOfJobs,'Number of xml-Files per Job',numberOfSplits
 
                         for it in range(numberOfJobs):
-			    if (it+1)*numberOfSplits > Total_xml: break
+			    #if it*numberOfSplits > Total_xml: break
                             outfile = open(path+'_'+str(it+1)+'.xml','w+')
                             for line in header.header:
                                 outfile.write(line)
