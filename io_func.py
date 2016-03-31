@@ -189,7 +189,7 @@ def write_all_xml(path,datasetName,header,Job,workdir):
             return NFiles
         print '%s: %i events' % (Version[0], NEvents)
         NFiles = int(math.ceil(NEvents / float(NEventsBreak)))
-        if NFiles > MaxJobs and not MaxJobs > 0:
+        if NFiles > MaxJobs and MaxJobs > 0:
             print 'Too many Jobs, changing NEventsBreak mode'
             print 'Max number of Jobs',MaxJobs,'Number of xml-Files per Job',NFiles
             NEventsBreak = int(math.ceil(NEvents/float(MaxJobs)))
@@ -224,11 +224,10 @@ def write_all_xml(path,datasetName,header,Job,workdir):
                         if numberOfJobs > MaxJobs and MaxJobs >0 :
                             numberOfSplits = int(math.ceil(float(Total_xml)/MaxJobs))
                             numberOfJobs = int(math.ceil(float(Total_xml)/numberOfSplits))
-                            print 'More than Jobs',MaxJobs,'changing FileSplit mode'
+                            print 'More than',MaxJobs,'Jobs. Changing FileSplit mode'
                             print 'New number of Jobs',numberOfJobs,'Number of xml-Files per Job',numberOfSplits
 
                         for it in range(numberOfJobs):
-			    #if it*numberOfSplits > Total_xml: break
                             outfile = open(path+'_'+str(it+1)+'.xml','w+')
                             for line in header.header:
                                 outfile.write(line)
