@@ -22,10 +22,18 @@ class pidWatcher(object):
         self.pidList = []
         self.taskList = []
         self.stateList = []
-        proc_qstat = subprocess.Popen(['qstat','-xml'],stdout=subprocess.PIPE)
-        qstat_xml =  StringIO.StringIO(proc_qstat.communicate()[0])
-        sax_parser = xml.sax.make_parser()
-        qstat_xml_par = parse(qstat_xml,sax_parser) 
+        try:
+            proc_qstat = subprocess.Popen(['qstat','-xml'],stdout=subprocess.PIPE)
+            qstat_xml =  StringIO.StringIO(proc_qstat.communicate()[0])
+            sax_parser = xml.sax.make_parser()
+            qstat_xml_par = parse(qstat_xml,sax_parser) 
+            self.parserWorked = True
+        except:
+            self.pidTaskList = []
+            self.parserWorked = False
+            print 'Processing qstat information did not work. Maybe the NAF has some problem.'
+            return 
+
         #print qstat_xml_par.toprettyxml()
         tags = qstat_xml_par.getElementsByTagName("job_list")
         for jobs in tags:
@@ -193,8 +201,7 @@ class JobManager(object):
                 process.pids = ['']*process.numberOfFiles
     #resubmit the jobs see above      
     def resubmit_jobs(self):
-        proc_qstat = subprocess.Popen(['qstat'],stdout=subprocess.PIPE)
-        qstat_out = proc_qstat.communicate()[0]
+        qstat_out = self.watch.parserWorked
         ask = True
         for process in self.subInfo:
 	    for it in process.missingFiles:
@@ -248,7 +255,7 @@ class JobManager(object):
                     missingRootFiles +=1
                 else:
                     rootFiles+=1
-                #auto resubmit if job dies, take care that there was some job before and warn the user if more then 20% of jobs die 
+                #auto resubmit if job dies, take care that there was some job before and warn the user if more then 10% of jobs die 
                 #print process.name,'batch status',batchstatus, 'process.reachedBatch',process.reachedBatch, 'process status',process.status,'resubmit counter',process.resubmit[it], 'resubmit active',autoresubmit
                 if (
                     process.notFoundCounter[it] > 5 and
@@ -287,6 +294,14 @@ class JobManager(object):
                 all(process.reachedBatch) # basically set to error when nothing is running anymore & everything was on the batch
             ):
                 process.status = 4
+            ###Debugging is ongoing
+            """"
+            if any( i > 6 for i in process.notFoundCounter):
+                print 'Process', process.name,'not found i-times',i
+                print 'Jobs Running? ', any(process.jobsRunning)
+                print 'Jobs Done?', all(process.jobsDone)
+                print 'Jobs reached Batch?', all(process.reachedBatch)
+            """
             if all(process.jobsDone) and not process.status == 2:
                 process.status = 1
             process.rootFileCounter=rootFiles
