@@ -262,7 +262,11 @@ def result_info(Job, path, header, other = []):
                     other_index +=1
             if not output_exist:
                 return 0
-            inputdata.io_list.FileInfoList = [['In','Lumi',inputdata.io_list.FileInfoList[0][2],'FileName',cycle.OutputDirectory+"/"+path+"/uhh2.AnalysisModuleRunner.*."+inputdata.Version+"_*.root"]]
+
+            if len(inputdata.io_list.FileInfoList)==0:
+                continue
+
+            inputdata.io_list.FileInfoList = [['In','Lumi',inputdata.io_list.FileInfoList[0][2],'FileName',cycle.OutputDirectory+"/"+path+"/uhh2.AnalysisModuleRunner.*."+inputdata.Version+"_*.root"]]   
             inputdata.io_list.InputTree  =['InputTree','Name',inputdata.io_list.other[other_index][2]]
             if not other:
                 inputdata.io_list.other = []
