@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from optparse import OptionParser
 from argparse import ArgumentParser
 from xml.dom.minidom import parse, parseString

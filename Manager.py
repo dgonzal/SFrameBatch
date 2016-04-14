@@ -4,6 +4,7 @@
 from io_func import *
 from batch_classes import *
 from Inf_Classes import *
+from SubmissionInfo_Class import *
 
 import os
 import subprocess
@@ -31,7 +32,9 @@ class pidWatcher(object):
         except:
             self.pidTaskList = []
             self.parserWorked = False
-            print 'Processing qstat information did not work. Maybe the NAF has some problem.'
+            print 'Processing qstat information did not work. Maybe the NAF has some problem. Or nothing is running on the Batch anymore.'
+            print 'Going to wait for 5 minutes, lets see if qstat will start to work again.'
+            time.sleep(300)
             return 
 
         #print qstat_xml_par.toprettyxml()
@@ -103,53 +106,6 @@ class HelpJSON:
                 mysub.load_Dict(jdict)
                 return mysub
         return None
-# class for the submission information
-class SubInfo(object):
-    def __init__(self,name='',numberOfFiles=0,data_type='',resubmit =0):
-        self.name = name
-        self.numberOfFiles =numberOfFiles #number of expected files
-        self.data_type = data_type
-        self.rootFileCounter = 0 #number of expected files 
-        self.status = 0   # 0: init, 1: data on disk
-        self.missingFiles = []
-        self.pids = ['']*numberOfFiles
-        self.notFoundCounter = [0]*numberOfFiles
-        self.reachedBatch = [False]*numberOfFiles
-        self.jobsRunning = [False]*numberOfFiles
-        self.jobsDone = [False]*numberOfFiles
-        self.arrayPid = -1
-        self.resubmit = [resubmit]*numberOfFiles
-        self.startingTime = 0
-    def reset_resubmit(self,value):
-        self.resubmit =[value]*self.numberOfFiles
-    def to_JSON(self):
-        #print json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-    def load_Dict(self,data):
-        self.__dict__ = data
-    def process_batchStatus(self,batch,it):
-        self.jobsRunning[it] = False
-        self.notFoundCounter[it] += 1
-        if batch == 1:
-            self.notFoundCounter[it]=0 # Safeguard, no action is taken if a job is not found once.
-            self.reachedBatch[it] = True # Use to understand when a job reached the batch before taking any action
-            self.jobsRunning[it] = True
-        #kill jobs with have an error state
-        if batch == 2:
-            if self.pids[it]:
-                print 'going to kill job', self.pids[it]
-                time.sleep(5)
-                subprocess.Popen(['qdel',str(self.pids[it])],stdout=subprocess.PIPE)
-                self.pids[it] ='' # just got killed
-                self.reachedBatch[it] = False;
-                return -2
-            else:
-                print 'going to kill job',str(self.arrayPid)+'.'+str(it+1)
-                time.sleep(5)
-                subprocess.Popen(['qdel',str(self.arrayPid)+'.'+str(it+1)],stdout=subprocess.PIPE)
-                self.reachedBatch[it] = False;
-                return -2
-        return batch
 
 class JobManager(object):
     def __init__(self,options,header,workdir):
@@ -295,7 +251,7 @@ class JobManager(object):
             ):
                 process.status = 4
             ###Debugging is ongoing
-            """"
+            """
             if any( i > 6 for i in process.notFoundCounter):
                 print 'Process', process.name,'not found i-times',i
                 print 'Jobs Running? ', any(process.jobsRunning)
@@ -345,9 +301,6 @@ class JobManager(object):
         print 'Number of files: ',readyFiles,'/',self.totalFiles,'(%.3i)' % (100*(1-float(readyFiles)/float(self.totalFiles))),stayAliveArray[self.stayAlive],stayAliveArray[self.stayAlive]
         print '='*80
     
-            
-
-
     #take care of merging
     def merge_files(self,OutputDirectory,nameOfCycle,InputData):
         self.merge.merge(OutputDirectory,nameOfCycle,self.subInfo,self.workdir,InputData)
@@ -360,6 +313,7 @@ class JobManager(object):
             if process.status==0:
                 return False
         return True
+
 #class to take care of merging (maybe rethink design)
 class MergeManager(object):
     def __init__(self,add,force,wait,onlyhist=False):
