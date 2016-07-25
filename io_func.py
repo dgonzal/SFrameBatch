@@ -159,7 +159,7 @@ def get_number_of_events(Job, Version, atleastOneEvent = False):
                 if name.endswith('.root'):
                     f = ROOT.TFile(name)
                     try:
-                        n = f.Get(InputData.io_list.InputTree[2]).GetEntriesFast()
+                        n = f.Get(str(InputData.io_list.InputTree[2])).GetEntriesFast()
                         if n < 1:
                             InputData.io_list.FileInfoList.remove(entry)
                             break
