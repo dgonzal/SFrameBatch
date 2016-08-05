@@ -129,6 +129,7 @@ class fileheader(object):
         self.Version = []
         self.AutoResubmit =0
         self.MaxJobsPerProcess = -1
+        self.RemoveEmptyFileSplit = False
         while '<JobConfiguration' not in line:
             self.header.append(line)
             line = f.readline()
@@ -140,6 +141,9 @@ class fileheader(object):
                     self.AutoResubmit = int(self.ConfigParse.attributes['AutoResubmit'].value)
                 if self.ConfigParse.hasAttribute('MaxJobsPerProcess'):
                     self.MaxJobsPerProcess = int(self.ConfigParse.attributes['MaxJobsPerProcess'].value)
+                if self.ConfigParse.hasAttribute('RemoveEmptyFileSplit'):
+                    self.RemoveEmptyFileSplit = bool(self.ConfigParse.attributes['RemoveEmptyFileSplit'].value)
+
             if 'ConfigSGE' in line:
                 self.ConfigSGE = parseString(line).getElementsByTagName('ConfigSGE')[0]
                 self.RAM = self.ConfigSGE.attributes['RAM'].value
@@ -176,6 +180,7 @@ def get_number_of_events(Job, Version, atleastOneEvent = False):
 def write_all_xml(path,datasetName,header,Job,workdir):
     NEventsBreak= header.NEventsBreak
     FileSplit=header.FileSplit
+    FileSplitCompleteRemove = header.RemoveEmptyFileSplit
     MaxJobs = header.MaxJobsPerProcess
     NFiles=0
 
@@ -209,8 +214,10 @@ def write_all_xml(path,datasetName,header,Job,workdir):
             outfile.close()
  
     elif FileSplit>0:
+        if FileSplitCompleteRemove:
+            print "Removing all empty files in FileSplit mode."
         for entry in Version:
-            NEvents = get_number_of_events(Job,[entry], True)
+            NEvents = get_number_of_events(Job,[entry], FileSplitCompleteRemove)
             if NEvents <= 0:
                 print 'No entries found for',entry,'Going to ignore this sample.'
                 continue

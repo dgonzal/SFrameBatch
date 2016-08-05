@@ -85,7 +85,11 @@ def SFrameBatchMain(input_options):
                       default=[],
                       help="This is used if you need to add something to all the InputData Childs (e.g an OutputTree) in the Result.xml file. If only one argument is passed it is assumed to be the name of the OutputTree."
                       )
-
+    parser.add_option("--RemoveEmptyFiles",
+                      action="store_true",
+                      dest="FileSplitFileCheck",
+                      help="Force to remove empty files in FileSplit mode. This is only necessary after a Selection where there many Files with no entries at all or only very few. This might lead to sframe crashing."
+                      )
     
     (options, args) = parser.parse_args(input_options)
     
@@ -111,6 +115,10 @@ def SFrameBatchMain(input_options):
     sax_parser = xml.sax.make_parser()
     xmlparsed = parse(xmlfile_strio,sax_parser)
     header = fileheader(xmlfile)
+    if options.FileSplitFileCheck:
+        header.RemoveEmptyFileSplit = True
+    else:
+        header.RemoveEmptyFiles = False
     node = xmlparsed.getElementsByTagName('JobConfiguration')[0]
     Job = JobConfig(node)
     

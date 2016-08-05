@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import subprocess
 import json
+import time
 
 # class for the submission information
 class SubInfo(object):
