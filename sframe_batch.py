@@ -14,6 +14,7 @@ import StringIO
 import subprocess
 #import multiprocessing
 from Manager import *
+from LumiCalcAutoBuilder import *
 
 def SFrameBatchMain(input_options):
     parser = OptionParser(usage="usage: %prog [options] filename",
@@ -90,17 +91,30 @@ def SFrameBatchMain(input_options):
                       dest="FileSplitFileCheck",
                       help="Force to remove empty files in FileSplit mode. This is only necessary after a Selection where there many Files with no entries at all or only very few. This might lead to sframe crashing."
                       )
-    
+    parser.add_option("--XMLDatabase",
+                      action="store",
+                      dest="xmldatabaseDir",
+                      help="This command creates from a data file the new sframe_main xml file calculating the lumi from the number of events and a given cross section. You can specify the number of events (weighted). Else it will try to find the number of events at the end of the xml Files (stored in the dateset directory) or use a small python script to read the number of entries from the trees. If it has to read the number of entries from the trees you need to specify how many cores it should use and also the method to be used. True == Fast / False == weights. Example can be found as DatabaseExample. USERCONFIG is not filled and needs to be done manually. Usage: sframe_batch --XMLDatabase DATABASE_DIR FILENAME_TO_STORE."
+                      )
+
+
     (options, args) = parser.parse_args(input_options)
     
     start = timeit.default_timer()
 
     #global header
-
     if len(args) != 1:
-        parser.error("wrong number of arguments help can be invoked with --help")
+        parser.error("wrong number of arguments. Help can be invoked with --help")
 
     xmlfile = args[0]
+    if options.xmldatabaseDir:
+          XMLBuilder = lumicalc_autobuilder(options.xmldatabaseDir)
+          XMLBuilder.write_to_toyxml(xmlfile)
+          stop = timeit.default_timer()
+          print "SFrame Batch was running for",round(stop - start,2),"sec"
+          print "SFrame Batch just build",xmlfile,"for you. Fill the USERCONFIG yourself."
+          return 0
+
     if os.path.islink(xmlfile):
         xmlfile = os.path.abspath(os.readlink(xmlfile))
     # softlink JobConfig.dtd into current directory
@@ -119,6 +133,9 @@ def SFrameBatchMain(input_options):
         header.RemoveEmptyFileSplit = True
     else:
         header.RemoveEmptyFiles = False
+    if header.RemoveEmptyFileSplit and header.FileSplit:
+        print "Removing all empty files in FileSplit mode."
+
     node = xmlparsed.getElementsByTagName('JobConfiguration')[0]
     Job = JobConfig(node)
     
@@ -203,5 +220,6 @@ def SFrameBatchMain(input_options):
 
 
 if __name__ == "__main__":
+    print 'Arguments',sys.argv[1:]
     status = SFrameBatchMain(sys.argv[1:])
     exit(status)

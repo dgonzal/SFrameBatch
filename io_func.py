@@ -214,8 +214,6 @@ def write_all_xml(path,datasetName,header,Job,workdir):
             outfile.close()
  
     elif FileSplit>0:
-        if FileSplitCompleteRemove:
-            print "Removing all empty files in FileSplit mode."
         for entry in Version:
             NEvents = get_number_of_events(Job,[entry], FileSplitCompleteRemove)
             if NEvents <= 0:
