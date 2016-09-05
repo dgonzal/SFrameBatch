@@ -6,7 +6,7 @@ import ConfigParser
 # Keep this in mind if it need to be updated some day
 import readaMCatNloEntries
 
-import sys, glob, copy
+import sys, glob, copy, os
 # From a list of CrossSections and XML Files this class creates the sframe steering file!
 # Lets see how complicated this can get ???  
 class process_helper(object):
@@ -26,7 +26,6 @@ class lumicalc_autobuilder(object):
     def __init__(self,path_to_Data):
         self.ProcessList = []
         with open(str(path_to_Data)) as f:
-
             for line in f:
                 if '#' in line or line == '\n' :
                     continue
@@ -40,6 +39,10 @@ class lumicalc_autobuilder(object):
                         currentwork = exp[len(split_wildcards[0])-1:len(exp)-len(split_wildcards[1])]
                         list_process[0]= list_process[0].replace('*',currentwork)
                         list_process[1]= exp
+
+                    if '/' not in list_process[1]:
+                        list_process[1] = os.path.abspath(list_process[1])
+
                     #print list_process
                     if 'data' in list_process[0].lower():
                         self.ProcessList.append(process_helper(list_process[0],1,list_process[1],1))
