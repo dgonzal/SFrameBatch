@@ -215,13 +215,13 @@ def write_all_xml(path,datasetName,header,Job,workdir):
  
     elif FileSplit>0:
         for entry in Version:
-            NEvents = get_number_of_events(Job,[entry], FileSplitCompleteRemove)
+            NEvents = get_number_of_events(Job,[entry], not FileSplitCompleteRemove)
             if NEvents <= 0:
                 print 'No entries found for',entry,'Going to ignore this sample.'
                 continue
             print 'Splitting job by files',entry
             for cycle in Job.Job_Cylce:
-                for p in range(len(cycle.Cycle_InputData)):
+                for p in xrange(len(cycle.Cycle_InputData)):
                     if(cycle.Cycle_InputData[p].Version==entry) or Version ==-1:
 		        Total_xml = len(cycle.Cycle_InputData[p].io_list.FileInfoList)
                         numberOfJobs = int(math.ceil(float(Total_xml)/FileSplit))
