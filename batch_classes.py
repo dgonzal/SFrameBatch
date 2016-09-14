@@ -95,7 +95,7 @@ def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
     string=''
     proc = None
     position = -1
-    command_string = 'nice -n 10 hadd -v 1 ' 
+    command_string = 'nice -n 10 hadd ' # -v 1 ' # the -v stopped working in root 6.06/01 now we get a lot of crap
     if onlyhists: command_string += '-T '
     if(outputTree):
         for i in range(NFiles):
