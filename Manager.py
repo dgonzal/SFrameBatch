@@ -12,6 +12,7 @@ import itertools
 import datetime
 import json
 import time
+import gc
 
 import StringIO
 from xml.dom.minidom import parse, parseString
@@ -126,7 +127,9 @@ class JobManager(object):
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
-        for process in range(len(InputData)):
+        number_of_processes = len(InputData)
+        gc.disable()
+        for process in xrange(number_of_processes):
             found = None
             processName = ([InputData[process].Version])
             if jsonhelper.data:
@@ -134,7 +137,7 @@ class JobManager(object):
                 found = jsonhelper.check(InputData[process].Version)
                 if found:
                     self.subInfo.append(found)
-            if not found: 
+            if not found:
                 self.subInfo.append(SubInfo(InputData[process].Version,write_all_xml(self.workdir+'/'+InputData[process].Version,processName,self.header,Job,self.workdir),InputData[process].Type))
             if self.subInfo[-1].numberOfFiles == 0:
                 print 'Removing',self.subInfo[-1].name
@@ -142,7 +145,8 @@ class JobManager(object):
             else:
                 self.totalFiles += self.subInfo[-1].numberOfFiles
                 self.subInfo[-1].reset_resubmit(self.header.AutoResubmit) #Reset the retries every time you start
-                write_script(processName[0],self.workdir,self.header)
+                write_script(processName[0],self.workdir,self.header) #Write the scripts you need to start the submission
+        gc.enable()
     #submit the jobs to the batch as array job
     #the used function should soon return the pid of the job for killing and knowing if something failed
     def submit_jobs(self,OutputDirectory,nameOfCycle):
@@ -352,7 +356,7 @@ class MergeManager(object):
         if not self.wait: return
         for process in self.active_process:
             if not process: continue
-            print process.communicate()[0]
+            print 'Active process',process.communicate()[0]
             if not process.poll():
                 process.wait()
                 #os.kill(process.pid,-9)
