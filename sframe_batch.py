@@ -174,7 +174,7 @@ def SFrameBatchMain(input_options):
                         if item_name == cycle_item.Name:
                             print "Replacing",item_name,"Value:",cycle_item.Value ,"with",item_value
                             cycle_item.Value = item_value
-        print 'filling manager'
+        print 'starting manager'
         manager = JobManager(options,header,workdir)
         manager.process_jobs(cycle.Cycle_InputData,Job)
         nameOfCycle = cycle.Cyclename.replace('::','.')
