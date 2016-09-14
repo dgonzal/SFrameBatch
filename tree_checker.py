@@ -13,7 +13,7 @@ def check_TreeExists(filename,treename):
           #print filename,'True entries',entries,entries>0
           return  entries>0
      except:
-          print 'False'
+          #print 'False'
           return False
      #entries = rootTree.GetEntriesFast()
      #if rootTree: return False
