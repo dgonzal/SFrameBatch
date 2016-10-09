@@ -124,6 +124,7 @@ class JobManager(object):
         self.printString = []
         self.keepGoing = options.keepGoing
         self.exitOnQuestion = options.exitOnQuestion
+        self.outputstream = self.workdir+'/Stream_'
     #read xml file and do the magic 
     def process_jobs(self,InputData,Job):
         jsonhelper = HelpJSON(self.workdir+'/SubmissinInfoSave.p')
@@ -152,7 +153,7 @@ class JobManager(object):
     def submit_jobs(self,OutputDirectory,nameOfCycle):
         for process in self.subInfo:
             process.startingTime = time.time()
-            process.arrayPid = submit_qsub(process.numberOfFiles,self.workdir+'/Stream_'+str(process.name),str(process.name),self.workdir)
+            process.arrayPid = submit_qsub(process.numberOfFiles,self.outputstream+str(process.name),str(process.name),self.workdir)
             print 'Submitted jobs',process.name, 'pid', process.arrayPid
             process.reachedBatch = [False]*process.numberOfFiles
             if process.status != 0:
@@ -176,7 +177,7 @@ class JobManager(object):
                             exit(-1)
                     ask = False
                 if batchstatus != 1:
-                    process.pids[it-1] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it),self.workdir,self.header)
+                    process.pids[it-1] = resubmit(self.outputstream+process.name,process.name+'_'+str(it),self.workdir,self.header)
                     #print 'Resubmitted job',process.name,it, 'pid', process.pids[it-1]
                     self.printString.append('Resubmitted job '+process.name+' '+str(it)+' pid '+str(process.pids[it-1]))
                     if process.status != 0: process.status =0
@@ -236,7 +237,7 @@ class JobManager(object):
                         ask = False
                     #print 'resubmitting', process.name+'_'+str(it+1),es not Found',process.notFoundCounter[it], 'pid', process.pids[it], process.arrayPid, 'task',it+1
                     waitingFlag_autoresub = True
-                    process.pids[it] = resubmit(self.workdir+'/Stream_'+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
+                    process.pids[it] = resubmit(self.outputstream+process.name,process.name+'_'+str(it+1),self.workdir,self.header)
                     #print 'AutoResubmitted job',process.name,it, 'pid', process.pids[it]
                     self.printString.append('File Found '+str(os.path.exists(filename)))
                     if os.path.exists(filename): self.printString.append('Timestamp is ok '+str(process.startingTime < os.path.getctime(filename)))
@@ -307,7 +308,7 @@ class JobManager(object):
     
     #take care of merging
     def merge_files(self,OutputDirectory,nameOfCycle,InputData):
-        self.merge.merge(OutputDirectory,nameOfCycle,self.subInfo,self.workdir,InputData)
+        self.merge.merge(OutputDirectory,nameOfCycle,self.subInfo,self.workdir,InputData,self.outputstream)
     #wait for every process to finish
     def merge_wait(self):
         self.merge.wait_till_finished()
@@ -333,7 +334,7 @@ class MergeManager(object):
         else:
             return False
 
-    def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData):
+    def merge(self,OutputDirectory,nameOfCycle,info,workdir,InputData,outputdir):
         if not self.add and not self.force and not self.onlyhist: return  
         #print "Don't worry your are using nice = 10" 
         OutputTreeName = ""
@@ -347,7 +348,7 @@ class MergeManager(object):
             #print any(process.jobsRunning)
             #print process.name,any(process.jobsRunning), process.status ==1,os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root'
             if (not os.path.exists(OutputDirectory+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'.root') and all(process.jobsDone) and process.status !=2 ) or self.force:
-                self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName,self.onlyhist))
+                self.active_process.append(add_histos(OutputDirectory,nameOfCycle+'.'+process.data_type+'.'+process.name,process.numberOfFiles,workdir,OutputTreeName,self.onlyhist,outputdir+process.name))
                 process.status = 2
             #elif process.status !=2: 
             #    process.status = 3
