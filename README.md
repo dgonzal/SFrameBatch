@@ -37,7 +37,6 @@ There are some open issues and possible extensions.
 -> For ppl interested in new features pls check the brach *development*. Since coding is most of the time rather easy and debbuging is not. At least some ppl using this branch would be very good. 
 
 ## Issues 
--> hadd throws some warnings
 
 -> very few safety & sanity checks
 
@@ -47,8 +46,5 @@ There are some open issues and possible extensions.
 
 ## Extensions & improvements
 
--> http://stackoverflow.com/questions/26104116/qstat-and-long-job-names retrieve names and extendet support for resubmission if job is fails (in progress)
-
--> automatic resubmission (in progress)
 
 -> gui e.g. see https://github.com/wardi/urwid, it is shipped with cmssw
