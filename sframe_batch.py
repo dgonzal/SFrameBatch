@@ -220,6 +220,6 @@ def SFrameBatchMain(input_options):
 
 
 if __name__ == "__main__":
-    print 'Arguments',sys.argv[1:]
+    #print 'Arguments',sys.argv[1:]
     status = SFrameBatchMain(sys.argv[1:])
     exit(status)

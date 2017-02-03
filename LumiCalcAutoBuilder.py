@@ -6,12 +6,13 @@ import ConfigParser
 # Keep this in mind if it need to be updated some day
 import readaMCatNloEntries
 
-import sys, glob, copy, os
+import sys, glob, copy, os, re
 # From a list of CrossSections and XML Files this class creates the sframe steering file!
 # Lets see how complicated this can get ???  
 class process_helper(object):
     def __init__(self,name,crosssection,path,numberEvents):
         self.name = name
+        
         self.crosssection = float(crosssection)
         self.path = path
         self.numberEvents = float(numberEvents)
@@ -25,14 +26,26 @@ def str2bool(v):
 class lumicalc_autobuilder(object):
     def __init__(self,path_to_Data):
         self.ProcessList = []
+        finished_samples = False
+        self.UserConfigText = []
         with open(str(path_to_Data)) as f:
             for line in f:
                 if '#' in line or line == '\n' :
                     continue
+                elif 'USERCONFIGBLOCK' in line:
+                    finished_samples = True
+                    continue
+                if finished_samples:
+                    striped_line = line.lstrip().rstrip()
+                    if striped_line: self.UserConfigText.append(striped_line)
+                    continue
+                    
                 tmpsplit = line.split()
+                if not tmpsplit:continue
+
                 for exp in glob.glob(tmpsplit[1]):
                     list_process = copy.deepcopy(tmpsplit)
-                    #print list_process
+                    print list_process
                     currentfile = ''
                     if '*' in tmpsplit[1]:
                         split_wildcards = tmpsplit[1].split('*')
@@ -40,8 +53,8 @@ class lumicalc_autobuilder(object):
                         list_process[0]= list_process[0].replace('*',currentwork)
                         list_process[1]= exp
 
-                    if '/' not in list_process[1]:
-                        list_process[1] = os.path.abspath(list_process[1])
+                    #if '/' not in list_process[1]:
+                    list_process[1] = os.path.abspath(list_process[1])
 
                     #print list_process
                     if 'data' in list_process[0].lower():
@@ -52,11 +65,12 @@ class lumicalc_autobuilder(object):
                 
                     for xmlline in reversed(open(list_process[1]).readlines()):
                         lastxmlline = xmlline.rstrip()
-                        #print lastxmlline
+                        #print list_process[1],lastxmlline
                         break
                     #print 'Bool',str2bool(list_process[4])
 
                     if '<!--' not in lastxmlline or '-->' not in lastxmlline:
+                        #print list_process[1]
                         if len(list_process) < 5:
                             if len(list_process) == 4: 
                                 numberEvents = float(list_process[3])
@@ -74,7 +88,12 @@ class lumicalc_autobuilder(object):
                             numberEvents = float(list_process[3])
                         else:
                             splitted_lastwords = lastxmlline.split('"')
-                            numberEvents = splitted_lastwords[1]
+                            #print splitted_lastwords
+                            if len(splitted_lastwords)>1:
+                                numberEvents = splitted_lastwords[1]
+                            else:
+                                #print lastxmlline.split(' ')
+                                numberEvents = lastxmlline.split(' ')[-2]
 
                     crosssectionNumber = list_process[2]
                     if '*' in crosssectionNumber:
@@ -103,8 +122,7 @@ class lumicalc_autobuilder(object):
             f.write('\t<Library Name="__CHANGE_ME__"/>\n')
             f.write('\t<Package Name="__CHANGE_ME__.par" />\n')
             f.write('\t<Cycle Name="uhh2::AnalysisModuleRunner" OutputDirectory="./__CHANGE_ME__/" PostFix="" TargetLumi="__CHANGE_ME__">\n')
-            for i in self.ProcessList:
-                
+            for i in self.ProcessList:                
                 datatype = 'MC'
                 if 'data' in i.name.lower(): datatype = 'DATA'
                 f.write('\t\t<InputData Lumi="'+str(i.lumi)+'" NEventsMax="-1" Type="'+datatype+'" Version="'+i.name+'" Cacheable="False">\n')
@@ -115,6 +133,8 @@ class lumicalc_autobuilder(object):
                 print 'Added Process to InputData:', i.name,'with lumi:',i.lumi
             f.write('\t\t<UserConfig>\n')
             f.write('\t\t<!-- Please add all the collections and stuff you need -->\n')
+            for line in self.UserConfigText:
+                f.write('\t\t\t'+line+'\n')
             f.write('\t\t</UserConfig>\n')
             f.write('\t</Cycle>\n')
             f.write('</JobConfiguration>\n')
