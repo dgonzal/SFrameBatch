@@ -3,7 +3,7 @@
 # Format is Process Name, Path to XML File, Cross Section, either number of events/ cores,method (True for fast and false for weights)
 # If there exists a tag with the number of events it will be read in if the last colum is left empty.
 # For Data thr cross section should be empty
-# Usage sframe_batch.py --XMLDatabase SampleInfo FILENAME_TO_STORE.xml
+# Usage sframe_batch.py --XMLDatabase RunII_80X_v3.info FILENAME_TO_STORE.xml
 
 #NickName               Directory					Cross section		Number of Events/Cores   Methods  
 #SingleEleData 	    	DATA_SingleElectron*.xml              
@@ -11,6 +11,7 @@ SingleMuData 		DATA_SingleMu*.xml
 SingleMuData		SingleMuon*
 BprimeB* 		Bprime/BprimeBToTW_M-*.xml			1
 BprimeT*             	Bprime/BprimeTToTW_M-*.xml               	1
+X53*			Bprime/X53ToTW_M-*.xml				1
 SingleT_t		MC_ST_t-channel_antitop_4f_inclusiveDecays.xml	80.95		   	
 SingleT_t_top		MC_ST_t-channel_top_4f_inclusiveDecays.xml	136.02		   	
 SingleTWtop		ST_tW_top_5f_inclusiveDecays_13TeV.xml		35.6   	   		
@@ -22,10 +23,10 @@ TTbar_Tune 		MC_TT_TuneCUETP8M2T4.xml	 	 	831.76
 #WW 			MC_WW.xml				 	118.7		   		993214	    
 #WZ 			MC_WZ.xml 				 	47.13		   		1000000	    
 #ZZ 			MC_ZZ.xml 				 	16.523		   		989312	    
-#WJets_HT100to200 	MC_WJets_LNu_HT-100To200.xml 		 	1345*1.21	   		37778906    
-#WJets_HT200to400 	MC_WJetsToLNu_HT-200To400.xml 		 	359.7*1.21			19851624    
-#WJets_HT400to600 	MC_WJetsToLNu_HT-400To600.xml 		 	48.91*1.21	   		7432746	    
-#WJets_HT600to800 	MC_WJets_LNu_HT-600To800.xml		 	12.05*1.21	   		14410862    
+WJets_HT100to200 	MC_WJetsToLNu_HT-100To200.xml 		 	1345*1.21	   		    
+WJets_HT200to400 	MC_WJetsToLNu_HT-200To400.xml 		 	359.7*1.21			
+WJets_HT400to600 	MC_WJetsToLNu_HT-400To600.xml 		 	48.91*1.21	   		
+WJets_HT600to800 	MC_WJetsToLNu_HT-600To800.xml		 	12.05*1.21	   		
 WJets_HT800to1200 	MC_WJetsToLNu_HT-800To1200.xml 		 	5.501*1.21	   			    
 WJets_HT1200to2500 	MC_WJetsToLNu_HT-1200To2500.xml 	 	1.329*1.21	   			    
 WJets_HT2500toInf 	MC_WJetsToLNu_HT-2500ToInf.xml 		 	0.03216*1.21	   			    
