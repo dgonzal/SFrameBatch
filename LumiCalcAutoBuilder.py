@@ -66,7 +66,8 @@ class lumicalc_autobuilder(object):
                     for xmlline in reversed(open(list_process[1]).readlines()):
                         lastxmlline = xmlline.rstrip()
                         #print list_process[1],lastxmlline
-                        break
+                        if lastxmlline:
+                            break
                     #print 'Bool',str2bool(list_process[4])
 
                     if '<!--' not in lastxmlline or '-->' not in lastxmlline:
