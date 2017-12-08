@@ -9,6 +9,8 @@ import readaMCatNloEntries
 import sys, glob, copy, os, re
 # From a list of CrossSections and XML Files this class creates the sframe steering file!
 # Lets see how complicated this can get ???  
+
+
 class process_helper(object):
     def __init__(self,name,crosssection,path,numberEvents):
         self.name = name
@@ -77,11 +79,14 @@ class lumicalc_autobuilder(object):
                                 numberEvents = float(list_process[3])
                             else:
                                 print "No idea which method to use to read entries please add cores and method"
+                                print "for",list_process[0]
                                 exit(1)
                         if len(list_process) > 4:
-                            numberEvents = readaMCatNloEntries.readEntries(int(list_process[3]),[list_process[1]],str2bool(list_process[4]))[0]
                             methodname = 'fast'
                             if not str2bool(list_process[4]): methodname = 'weights' 
+                            print 'going to count events for',list_process[0]
+                            numberEvents = readaMCatNloEntries.readEntries(int(list_process[3]),[list_process[1]],str2bool(list_process[4]))[0]
+                            
                             with open(list_process[2], "a") as myfile:
                                 myfile.write('<!-- NumberEntries="'+str(numberEvents)+'" Method="'+str(methodname)+'" -->')
                     else:
@@ -110,6 +115,12 @@ class lumicalc_autobuilder(object):
         # Parts are filled with __CHANGE_ME__!!!
         # UserConfig Section is missing  
     def write_to_toyxml(self,xmlname):
+        with open(str('lumi_'+xmlname.replace('xml','py')),'w+') as nf:
+            nf.write('lumi_list = [\n')
+            for i in self.ProcessList:
+                nf.write('\t[\''+i.name+'\','+str(i.lumi)+'],\n')
+            nf.write('\t]')
+        
         with open(str(xmlname),'w+') as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             f.write('<!DOCTYPE JobConfiguration PUBLIC "" "JobConfig.dtd"[\n')
@@ -139,6 +150,7 @@ class lumicalc_autobuilder(object):
             f.write('\t\t</UserConfig>\n')
             f.write('\t</Cycle>\n')
             f.write('</JobConfiguration>\n')
+            print 'Process list contains',len(self.ProcessList),'entries'
         #con = create_database(data)
         #lumi
 

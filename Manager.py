@@ -211,7 +211,7 @@ class JobManager(object):
                 if os.path.exists(filename) and process.startingTime < os.path.getctime(filename) and not process.jobsRunning[it]:
                     process.jobsDone[it] = True
                 if not process.jobsDone[it]:
-                    missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root\n')
+                    missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root  sframe_main '+process.name+'_'+str(it+1)+'.xml\n')
                     self.subInfo[i].missingFiles.append(it+1)
                     missingRootFiles +=1
                 else:
@@ -266,12 +266,19 @@ class JobManager(object):
             if all(process.jobsDone) and not process.status == 2:
                 process.status = 1
             process.rootFileCounter=rootFiles
-        missing.close()
+        try:
+            missing.close()
+        except IOError as e:
+            print "I/O error({0}): {1}".format(e.errno, e.strerror)
+            
         self.missingFiles = missingRootFiles
         #Save/update pids and other information to json file, such that it can be loaded and used later
-        jsonFile = open(self.workdir+'/SubmissinInfoSave.p','wb+')
-        json.dump(ListOfDict, jsonFile)
-        jsonFile.close()
+        try:
+            jsonFile = open(self.workdir+'/SubmissinInfoSave.p','wb+')
+            json.dump(ListOfDict, jsonFile)
+            jsonFile.close()
+        except IOError as e:
+            print "I/O error({0}): {1}".format(e.errno, e.strerror)
         if(waitingFlag_autoresub): time.sleep(5)
         
                 

@@ -27,6 +27,8 @@ def write_script(name,workdir,header):
 #$ -M """+header.Mail+"""
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
+## running time, normaly 3h should be enough
+#$ -l h_rt=03:00:00
 ##CPU memory
 #$ -l h_vmem="""+header.RAM+"""G
 ##DISK memory
@@ -56,8 +58,11 @@ def resub_script(name,workdir,header):
 #$ -M """+header.Mail+"""
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
+## running time, normaly 3h should be enough
+#$ -l h_rt=03:00:00
 ##CPU memory
-#$ -l h_vmem="""+header.RAM+"""G
+##$ -l h_vmem="""+header.RAM+"""G
+#$ -l h_vmem=8G
 ##DISK memory
 #$ -l h_fsize="""+header.DISK+"""G   
 cd """+workdir+"""

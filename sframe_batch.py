@@ -186,6 +186,13 @@ def SFrameBatchMain(input_options):
         manager.check_jobstatus(cycle.OutputDirectory, nameOfCycle,False,False)
         if options.resubmit: manager.resubmit_jobs()
         #get once into the loop for resubmission & merging
+
+        if not options.loop and options.forceMerge and not options.waitMerge:
+            manager.check_jobstatus(cycle.OutputDirectory,nameOfCycle)
+            manager.merge_files(cycle.OutputDirectory,nameOfCycle,cycle.Cycle_InputData)
+            return 0
+
+        
         loop_check = True 
         while loop_check==True:   
             if not options.loop:
