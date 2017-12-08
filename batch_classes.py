@@ -27,6 +27,8 @@ def write_script(name,workdir,header):
 #$ -M """+header.Mail+"""
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
+## running time, normaly 3h should be enough
+#$ -l h_rt=03:00:00
 ##CPU memory
 #$ -l h_vmem="""+header.RAM+"""G
 ##DISK memory
@@ -56,8 +58,11 @@ def resub_script(name,workdir,header):
 #$ -M """+header.Mail+"""
 ##running in local mode with 8-12 cpu slots
 ##$ -pe local 8-12
+## running time, normaly 3h should be enough
+#$ -l h_rt=03:00:00
 ##CPU memory
-#$ -l h_vmem="""+header.RAM+"""G
+##$ -l h_vmem="""+header.RAM+"""G
+#$ -l h_vmem=8G
 ##DISK memory
 #$ -l h_fsize="""+header.DISK+"""G   
 cd """+workdir+"""
@@ -89,32 +94,41 @@ def resubmit(Stream,name,workdir,header):
     proc_qstat = Popen(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
     return proc_qstat.communicate()[0].split()[2]
 
-def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists) :
+def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists,outputdir):
+    if not os.path.exists(outputdir):
+        os.makedirs(outputdir)
+    FNULL = open(os.devnull, 'w')
     if os.path.exists(directory+name+'.root'):
         call(['rm '+directory+name+'.root'], shell=True)
     string=''
     proc = None
     position = -1
-    command_string = 'nice -n 10 hadd -v 1 ' 
+    command_string = 'nice -n 10 hadd ' # -v 1 ' # the -v stopped working in root 6.06/01 now we get a lot of crap
     if onlyhists: command_string += '-T '
     if(outputTree):
         for i in range(NFiles):
-            if check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree):
+            if check_TreeExists(directory+workdir+'/'+name+'_'+str(i)+'.root',outputTree) and position ==-1:
                 position = i
-                string+=' '+directory+workdir+'/'+name+'_'+str(i)+'.root'
+                string+=str(i)
                 break
 
     for i in range(NFiles):
-        if not position == i:
-            string += ' '+directory+workdir+'/'+name+'_'+str(i)+'.root'
+        if not position == i and not position == -1:
+            string += ','+str(i)
+        elif position ==-1:
+            string += str(i)
+            position = 0
 
-    #print command_string+directory+name+'.root'+string
+    source_files = ""
+    if NFiles > 1:
+        source_files = directory+workdir+'/'+name+'_{'+string+'}.root'
+    else:
+        source_files = directory+workdir+'/'+name+'_'+string+'.root'
 
+    #print command_string+directory+name+'.root '+source_files
+    #print outputdir+'/hadd.log'
     if not string.isspace():
-        #return
-        #fhadd(directory+name+'.root',fileContainer,"TH1")
-        #print 'Merging',name+'.root'
-        proc = Popen([command_string+directory+name+'.root'+string], shell=True,stdout=PIPE)
+        proc = Popen([str(command_string+directory+name+'.root '+source_files+' > '+outputdir+'/hadd.log')], shell=True, stdout=FNULL, stderr=FNULL)
     else:
         print 'Nothing to merge for',name+'.root'
     return proc 

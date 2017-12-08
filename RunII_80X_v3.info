@@ -1,0 +1,116 @@
+# Config File for SFrameBatch to automagically construct 
+# SFrame XML Files just with CrossSections and XML Paths 
+# Format is Process Name, Path to XML File, Cross Section, either number of events/ cores,method (True for fast and false for weights)
+# If there exists a tag with the number of events it will be read in if the last colum is left empty.
+# For Data thr cross section should be empty
+# Usage sframe_batch.py --XMLDatabase RunII_80X_v3.info FILENAME_TO_STORE.xml
+
+#NickName               Directory					Cross section		Number of Events/Cores   Methods  
+#SingleEleData 	    	DATA_SingleElectron*.xml              
+SingleMuData 		DATA_SingleMu*.xml
+SingleMuData		SingleMuon*
+BprimeB* 		Bprime/BprimeBToTW_M-*.xml			1
+BprimeT*             	Bprime/BprimeTToTW_M-*.xml               	1
+X53*			Bprime/X53ToTW_M-*.xml				1
+SingleT_t		MC_ST_t-channel_antitop_4f_inclusiveDecays.xml	80.95		   	
+SingleT_t_top		MC_ST_t-channel_top_4f_inclusiveDecays.xml	136.02		   	
+SingleTWtop		ST_tW_top_5f_inclusiveDecays_13TeV.xml		35.6   	   		
+SingleTWAntitop 	ST_tW_antitop_5f_inclusiveDecays_13TeV.xml	35.6			
+SingleT_s		ST_s-channel_4f_leptonDecays_13TeV.xml	 	3.36  	           	
+#TTbar 			MC_TTbar.xml				 	831.76            	
+#TTbar_Mtt1000toInf	MC_TT_Mtt1000toInf.xml	  	         	20.578				23546331    			
+TTbar_Tune 		MC_TT_TuneCUETP8M2T4.xml	 	 	831.76					    
+#WW 			MC_WW.xml				 	118.7		   		993214	    
+#WZ 			MC_WZ.xml 				 	47.13		   		1000000	    
+#ZZ 			MC_ZZ.xml 				 	16.523		   		989312	    
+WJets_HT100to200 	MC_WJetsToLNu_HT-100To200.xml 		 	1345*1.21	   		    
+WJets_HT200to400 	MC_WJetsToLNu_HT-200To400.xml 		 	359.7*1.21			
+WJets_HT400to600 	MC_WJetsToLNu_HT-400To600.xml 		 	48.91*1.21	   		
+WJets_HT600to800 	MC_WJetsToLNu_HT-600To800.xml		 	12.05*1.21	   		
+WJets_HT800to1200 	MC_WJetsToLNu_HT-800To1200.xml 		 	5.501*1.21	   			    
+WJets_HT1200to2500 	MC_WJetsToLNu_HT-1200To2500.xml 	 	1.329*1.21	   			    
+WJets_HT2500toInf 	MC_WJetsToLNu_HT-2500ToInf.xml 		 	0.03216*1.21	   			    
+WJets_comp	        MC_WJetsToLNu.xml			 	61526.7				    	    
+									                        	            
+#ZJets_M10to50 		MC_DYJetsToLL_NLO_M10to50.xml 		 	18610		   			    
+#ZJets_M50 		MC_DYJetsToLL_NLO_M50.xml 		 	6025.2		   			    
+
+ZJets_HT70to100		MC_DYJetsToLL_M-50_HT-70to100.xml	  	175.3*1.23	
+ZJets_HT100to200	MC_DYJetsToLL_M-50_HT-100to200.xml	  	147.4*1.23			
+ZJets_HT200to400	MC_DYJetsToLL_M-50_HT-200to400.xml	  	40.99*1.23			
+ZJets_HT400to600	MC_DYJetsToLL_M-50_HT-400to600.xml	  	5.678*1.23			
+ZJets_HT600to800	MC_DYJetsToLL_M-50_HT-600to800.xml	  	1.367*1.23			
+ZJets_HT800to1200	MC_DYJetsToLL_M-50_HT-800to1200.xml		0.6304*1.23
+ZJets_HT1200to2500	MC_DYJetsToLL_M-50_HT-1200to2500.xml		0.1514*1.23
+ZJets_HT2500toINF	MC_DYJetsToLL_M-50_HT-2500toInf			0.003565*1.23
+								                        	            
+#QCD_20toInf_Mu		MC_QCD_20toInf_MuEnrichedPt15.xml	 	720648000*0.00042 			    
+									                        	            
+QCD_15to20_Mu		MC_QCD_Pt-15to20_MuEnrichedPt5.xml	 	1273190000*0.003  		4141208	    
+QCD_20to30_Mu		MC_QCD_Pt-20to30_MuEnrichedPt5.xml	 	558528000*0.0053  		31475094    
+QCD_30to50_Mu		MC_QCD_Pt-30to50_MuEnrichedPt5.xml	 	139803000*0.01182 		29944719    
+QCD_50to80_Mu		MC_QCD_Pt-50to80_MuEnrichedPt5.xml	 	19222500*0.02276  		19806515    
+QCD_80to120_Mu		MC_QCD_Pt-80to120_MuEnrichedPt5.xml	 	2758420*0.03844   		13778176    
+QCD_120to170_Mu	        MC_QCD_Pt-120to170_MuEnrichedPt5.xml	 	469797*0.05362	   		8042660	    
+QCD_170to300_Mu	        MC_QCD_Pt-170to300_MuEnrichedPt5.xml	 	117989*0.07335	   		7946703	    
+QCD_300to470_Mu	        MC_QCD_Pt-300to470_MuEnrichedPt5.xml	 	7820.25*0.10196   		7936465	    
+QCD_470to600_Mu	  	MC_QCD_Pt-470to600_MuEnrichedPt5.xml	 	645.528*0.12242   		3850466	    
+QCD_600to800_Mu		MC_QCD_Pt-600to800_MuEnrichedPt5.xml	 	187.109*0.13412   		4008200	    
+QCD_800to1000_Mu 	MC_QCD_Pt-800to1000_MuEnrichedPt5.xml  	 	32.3486*0.14552   		3959757	    
+QCD_1000toInf_Mu 	MC_QCD_Pt-1000toInf_MuEnrichedPt5.xml 	 	10.4305*0.15544   		3976075	    
+									                        	            
+QCD_Pt20to30_EM 	MC_QCD_Pt20to30_EMEnriched.xml		 	557600000*0.0096		9167183	    
+QCD_Pt30to50_EM		MC_QCD_Pt30to50_EMEnriched.xml		 	136000000*0.073	11498358	    	    
+QCD_Pt50to80_EM		MC_QCD_Pt50to80_EMEnriched.xml		 	19800000*0.146			23191144    
+QCD_Pt80to120_EM	MC_QCD_Pt80to120_EMEnriched.xml		 	2800000*0.125			33636668    
+QCD_Pt120to170_EM	MC_QCD_Pt120to170_EMEnriched.xml	 	477000*0.132			35369495    
+QCD_Pt170to300_EM	MC_QCD_Pt170to300_EMEnriched.xml	 	114000*0.165			11516622    
+QCD_Pt300toInf_EM	MC_QCD_Pt300toInf_EMEnriched.xml	 	9000*0.15			7360640	    
+									                        	            
+QCD_Pt30to80_bcToE	MC_QCD_Pt30to80_bcToE.xml		 	159068000*0.00255		15094812    
+QCD_Pt80to170_bcToE	MC_QCD_Pt80to170_bcToE.xml		 	3221000*0.01183	14087383	    	    
+QCD_Pt170to250_bcToE	MC_QCD_Pt170to250_bcToE.xml		 	105771*0.02492			8686936	    
+QCD_Pt250toInf_bcToE	MC_QCD_Pt250toInf_bcToE.xml		 	21094.1*0.03375	9874604     
+
+
+#################################################
+# The following will be used as Information Block for the xml files !
+# The UserConfig can be stored here. Later support for libs/lumi might be added
+# USERCONFIGBLOCK is the marker where it starts to read the user config!
+
+USERCONFIGBLOCK
+<Item Name="PrimaryVertexCollection" Value="offlineSlimmedPrimaryVertices" /> 
+<Item Name="ElectronCollection" Value="slimmedElectronsUSER" />
+<Item Name="MuonCollection" Value="slimmedMuonsUSER" /> 
+<Item Name="TauCollection" Value="slimmedTaus" />
+<Item Name="JetCollection" Value="slimmedJets" />
+<Item Name="GenJetCollection" Value="slimmedGenJets" />
+<Item Name="TopJetCollection" Value="slimmedJetsAK8_SoftDrop" />
+<Item Name="METName" Value="slimmedMETs" />
+<Item Name="GenParticleCollection" Value="GenParticles" /> 
+<Item Name="additionalBranches" Value="slimmedJetsPuppi slimmedMETsPuppi patJetsHepTopTagCHSPacked_daughters patJetsAk8CHSJetsSoftDropPacked_daughters" />
+<Item Name="SelectionTriggerName" Value=""/>
+
+<Item Name="lumi_file" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/common/data/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.root" />
+<Item Name="lumihists_lumi_per_bin" Value="50"/>
+<!--<Item Name="pileup_directory" Value=""/>-->
+<Item Name="pileup_directory_data" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/common/data/MyDataPileupHistogram.root" />
+<Item Name="pileup_directory_25ns" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/common/data/MyMCPileupHistogram.root"/>
+
+<Item Name="jecsmear_direction" Value="nominal" />
+<Item Name="jersmear_direction" Value="nominal" />
+<Item Name="MCBtagEfficiencies" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/scripts/BTagMCEfficiencyHistsMu.root" />
+
+<Item Name="BTagCalibration" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/common/data/CSVv2_ichep.csv" /> 
+<Item Name="SF_muonID" Value="nominal" /> 
+<Item Name="BTag_variation" Value="central" />
+
+<Item Name="PU_variation" Value="central" />
+<!--
+<Item Name="pileup_directory_data_up" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_20/src/UHH2/common/data/MyDataPileupHistogram_65550.root" />
+<Item Name="pileup_directory_data_down" Value="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_20/src/UHH2/common/data/MyDataPileupHistogram_72450.root" />
+-->
+<Item Name="AnalysisModule" Value="GenTestModule" />
+
+
+
