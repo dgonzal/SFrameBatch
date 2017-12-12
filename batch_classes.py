@@ -33,6 +33,8 @@ def write_script(name,workdir,header):
 #$ -l h_vmem="""+header.RAM+"""G
 ##DISK memory
 #$ -l h_fsize="""+header.DISK+"""G   
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"""+os.environ.get('LD_LIBRARY_PATH')+"""
+export LD_LIBRARY_PATH
 cd """+workdir+"""
 sframe_main """+name+"""_${SGE_TASK_ID}.xml
 """)
@@ -64,7 +66,9 @@ def resub_script(name,workdir,header):
 ##$ -l h_vmem="""+header.RAM+"""G
 #$ -l h_vmem=8G
 ##DISK memory
-#$ -l h_fsize="""+header.DISK+"""G   
+#$ -l h_fsize="""+header.DISK+"""G 
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"""+os.environ.get('LD_LIBRARY_PATH')+"""
+export LD_LIBRARY_PATH
 cd """+workdir+"""
 sframe_main """+name+""".xml
 
