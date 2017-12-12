@@ -59,6 +59,10 @@ class InputData(object):
     def __init__(self,node,cacheMe):
         self.NEventsSkip = 0        
         for item in node.attributes.items():
+            if ' ' in item[1]:
+                print 'Space in',item[0],'=',item[1]
+                print 'Aborting since this is most probably wrong'
+                exit(0)
             if(item[0]=='Lumi'): self.Lumi = item[1]
             if(item[0]=='NEventsMax'): self.NEventsMax = item[1]
             if(item[0]=='Type'): self.Type = item[1]
@@ -88,7 +92,7 @@ class InputData(object):
                     if len(self.io_list.InputTree)==0: 
                         self.io_list.InputTree=help_list
                     elif self.io_list.InputTree != help_list:
-                        print 'not using the same InputTree, strange prefere to exit'
+                        print 'not using the same InputTree. Prefere to exit'
                         exit(0)
                 else:
                     self.io_list.other.append(help_list)
