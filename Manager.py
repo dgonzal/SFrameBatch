@@ -27,15 +27,17 @@ class pidWatcher(object):
         try:
             proc_qstat = subprocess.Popen(['condor_q','-xml'],stdout=subprocess.PIPE)
             qstat_xml =  StringIO.StringIO(proc_qstat.communicate()[0])
+            #print qstat_xml.getvalue()
             sax_parser = xml.sax.make_parser()
             qstat_xml_par = parse(qstat_xml,sax_parser) 
             self.parserWorked = True
-        except:
+        except Exception as e:
+            print e
             self.pidTaskList = []
             self.parserWorked = False
             print 'Processing qstat information did not work. Maybe the NAF has some problem. Or nothing is running on the Batch anymore.'
             print 'Going to wait for 5 minutes, lets see if qstat will start to work again.'
-            time.sleep(300)
+            time.sleep(10)
             return 
 
         print qstat_xml_par.toprettyxml()
