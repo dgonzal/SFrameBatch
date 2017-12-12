@@ -25,7 +25,7 @@ class pidWatcher(object):
         self.taskList = []
         self.stateList = []
         try:
-            proc_qstat = subprocess.Popen(['qstat','-xml'],stdout=subprocess.PIPE)
+            proc_qstat = subprocess.Popen(['condor_q','-xml'],stdout=subprocess.PIPE)
             qstat_xml =  StringIO.StringIO(proc_qstat.communicate()[0])
             sax_parser = xml.sax.make_parser()
             qstat_xml_par = parse(qstat_xml,sax_parser) 
@@ -38,7 +38,7 @@ class pidWatcher(object):
             time.sleep(300)
             return 
 
-        #print qstat_xml_par.toprettyxml()
+        print qstat_xml_par.toprettyxml()
         tags = qstat_xml_par.getElementsByTagName("job_list")
         for jobs in tags:
             #print jobs.getElementsByTagName("state")[0].firstChild.nodeValue
