@@ -117,12 +117,12 @@ def SFrameBatchMain(input_options):
 
     xmlfile = args[0]
     if options.xmldatabaseDir:
-          XMLBuilder = lumicalc_autobuilder(options.xmldatabaseDir)
-          XMLBuilder.write_to_toyxml(xmlfile)
-          stop = timeit.default_timer()
-          print "SFrame Batch was running for", round(stop - start, 2), "sec"
-          print "SFrame Batch just build", xmlfile, "for you. Fill the USERCONFIG yourself."
-          return 0
+        XMLBuilder = lumicalc_autobuilder(options.xmldatabaseDir)
+        XMLBuilder.write_to_toyxml(xmlfile)
+        stop = timeit.default_timer()
+        print "SFrame Batch was running for", round(stop - start, 2), "sec"
+        print "SFrame Batch just build", xmlfile, "for you. Fill the USERCONFIG yourself."
+        return 0
 
     if os.path.islink(xmlfile):
         xmlfile = os.path.abspath(os.readlink(xmlfile))
@@ -154,7 +154,8 @@ def SFrameBatchMain(input_options):
     if options.workdir:
         print "Overwriting workdir:", workdir, "with", options.workdir
         workdir = options.workdir
-    if not workdir: workdir = "workdir"
+    if not workdir:
+        workdir = "workdir"
     # if not workdir.endswith("/"): workdir += "/"
     currentDir = os.getcwd()
     if not os.path.exists(workdir + '/'):
@@ -169,7 +170,8 @@ def SFrameBatchMain(input_options):
             print 'Overwriting', cycle.OutputDirectory, 'with', options.outputdir
             cycle.OutputDirectory = options.outputdir
             if not cycle.OutputDirectory.endswith(
-                "/"): cycle.OutputDirectory += "/"
+                    "/"):
+                cycle.OutputDirectory += "/"
         if cycle.OutputDirectory.startswith('./'):
             cycle.OutputDirectory = currentDir + cycle.OutputDirectory[1:]
         if len(options.useritemlist) > 0:
@@ -194,12 +196,16 @@ def SFrameBatchMain(input_options):
         if result_info(Job, workdir, header, options.sframeTreeInfo) == 1:
             print ' Result.xml created for further jobs'
         # submit jobs if asked for
-        if options.gridc:  gridstart(currentDir + '/' + workdir, cycle.OutputDirectory
-        if options.submit: manager.submit_jobs(
-            cycle.OutputDirectory, nameOfCycle)
+        if options.gridc:
+            gridstart(workdir, cycle.OutputDirectory, currentDir)
+            return 0
+        if options.submit:
+            manager.submit_jobs(
+                cycle.OutputDirectory, nameOfCycle)
         manager.check_jobstatus(cycle.OutputDirectory,
                                 nameOfCycle, False, False)
-        if options.resubmit: manager.resubmit_jobs()
+        if options.resubmit:
+            manager.resubmit_jobs()
         # get once into the loop for resubmission & merging
 
         if not options.loop and options.forceMerge and not options.waitMerge:
@@ -207,12 +213,10 @@ def SFrameBatchMain(input_options):
             manager.merge_files(cycle.OutputDirectory,
                                 nameOfCycle, cycle.Cycle_InputData)
             return 0
-
-
-        loop_check=True
+        loop_check = True
         while loop_check == True:
             if not options.loop:
-                loop_check=False
+                loop_check = False
                 # This is necessary since qstat sometimes does not find the jobs it should monitor.
                 # So it checks that it does not find the job 5 times before
                 # auto resubmiting it.
@@ -235,7 +239,7 @@ def SFrameBatchMain(input_options):
                                 nameOfCycle, False, False)
         print '-' * 80
         manager.print_status()
-    stop=timeit.default_timer()
+    stop = timeit.default_timer()
     print "SFrame Batch was running for", round(stop - start, 2), "sec"
     # exit gracefully
 
@@ -247,5 +251,5 @@ def SFrameBatchMain(input_options):
 
 if __name__ == "__main__":
     # print 'Arguments',sys.argv[1:]
-    status=SFrameBatchMain(sys.argv[1:])
+    status = SFrameBatchMain(sys.argv[1:])
     exit(status)
