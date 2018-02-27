@@ -208,7 +208,7 @@ class JobManager(object):
                 filename = OutputDirectory+'/'+self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root'
                 #if process.jobsRunning[it]:
                 #print filename, os.path.exists(filename), process.jobsRunning[it], process.jobsDone[it], process.arrayPid, process.pids[it]
-                if os.path.exists(filename) and process.startingTime < os.path.getctime(filename) and not process.jobsRunning[it]:
+                if os.path.exists(filename) and process.startingTime < os.path.getctime(filename) and not process.jobsRunning[it] and ospath.getsize(filename) > 10:
                     process.jobsDone[it] = True
                 if not process.jobsDone[it]:
                     missing.write(self.workdir+'/'+nameOfCycle+'.'+process.data_type+'.'+process.name+'_'+str(it)+'.root  sframe_main '+process.name+'_'+str(it+1)+'.xml\n')
