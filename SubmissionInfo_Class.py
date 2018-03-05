@@ -37,18 +37,7 @@ class SubInfo(object):
             self.jobsRunning[it] = True
         #kill jobs with have an error state
         if batch == 2:
-            if self.pids[it]:
-                print 'going to kill job', self.pids[it]
-                time.sleep(5)
-                subprocess.Popen(['qdel',str(self.pids[it])],stdout=subprocess.PIPE)
-                self.pids[it] ='' # just got killed
-                self.reachedBatch[it] = False;
-                return -2
-            else:
-                print 'going to kill job',str(self.arrayPid)+'.'+str(it+1)
-                time.sleep(5)
-                subprocess.Popen(['qdel',str(self.arrayPid)+'.'+str(it+1)],stdout=subprocess.PIPE)
-                self.reachedBatch[it] = False;
-                return -2
+            print "not yet implemented in ht condor! Do not remember what happens!"
+            return -2
         return batch
 

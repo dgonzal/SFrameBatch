@@ -19,9 +19,6 @@ from xml.dom.minidom import parse, parseString
 import xml.sax
 
 
-
-
-
 # takes care of looking into qstat 
 class pidWatcher(object):
     def __init__(self):
@@ -29,68 +26,32 @@ class pidWatcher(object):
         self.taskList = []
         self.stateList = []
         try:
+            #with the change from sge to condor this can nwo be a json dict!
             proc_qstat = subprocess.Popen(['condor_q','-json','-attributes','JobStatus,GlobalJobId'],stdout=subprocess.PIPE)
             qstat_xml =  StringIO.StringIO(proc_qstat.communicate()[0])
-            #print qstat_xml.getvalue()
-            #sax_parser = xml.sax.make_parser()
-            #qstat_xml_par = parse(qstat_xml,sax_parser)
-            qstat_xml_par = json.loads(qstat_xml.getvalue())
-            
-            self.parserWorked = True
+            if qstat_xml.getvalue():
+                qstat_xml_par = json.loads(qstat_xml.getvalue())            
+                self.parserWorked = True
+            else:
+                self.parserWorked = False
         except Exception as e:
             #print e
             self.pidTaskList = []
             self.parserWorked = False
             print 'Processing qstat information did not work. Maybe the NAF has some problem. Or nothing is running on the Batch anymore.'
             print 'Going to wait for 5 minutes, lets see if qstat will start to work again.'
-            time.sleep(300)
+            time.sleep(10)
             return 
-        
-        for item in qstat_xml_par:
+       
+        if self.parserWorked: 
+          for item in qstat_xml_par:
             #print item
             raw_id = item.get("GlobalJobId")
             jobid = raw_id.split("#")[1]
             self.pidList.append(jobid)
             self.stateList.append(item.get("JobStatus"))
             
-        self.pidTaskList = [''] * len(self.pidList)
    
-        """
-        #print qstat_xml_par.toprettyxml()
-        tags = qstat_xml_par.getElementsByTagName("c")
-        for jobs in tags:
-            #print jobs.nodeName
-            print jobs.toprettyxml()
-            for child in jobs.getElementsByTagName("a"):
-                print child.getElementsByTagName("s").data
-                #print child[0].toprettyxml
-
-
-            #print jobs.getElementsByTagName("state")[0].firstChild.nodeValue
-            print jobs.getElementsByTagName("sdsd") #[0].childNodes[0].nodeValue
-            self.pidList.append(jobs.getElementById("GlobalJobId")[0].firstChild.nodeValue)
-            self.stateList.append(jobs.getElementsByTagName("JobStatus")[0].firstChild.nodeValue)
-            print self.pidList[-1],self.stateList[-1]
-            if jobs.getElementsByTagName("tasks"):
-                taskvalue = str(jobs.getElementsByTagName("tasks")[0].firstChild.data)
-                self.taskList.append(taskvalue)
-            else:
-                self.taskList.append(-1)
-        
-
-        
-        for i in range(len(self.pidList)):
-            if ':' in str(self.taskList[i]):
-                splitted_string = str(self.taskList[i].split(':')[0])
-                splitted_strings = splitted_string.split(',')
-                splitted_at_hyphen = list(s.split('-') for s in splitted_strings)
-                int_list_of_lists = list(range(int(s[0]), int(s[1])+1) if len(s) > 1 else [int(s[0])] for s in splitted_at_hyphen)
-                int_list = list(itertools.chain.from_iterable(int_list_of_lists))
-                self.pidTaskList[i] = int_list
-            if ',' in str(self.taskList[i]):
-                splitted_strings = str(self.taskList[i].split(','))
-                int_list = [splitted_strings[0],splitted_strings[1]]
-         """
     def check_pidstatus(self,arraypid,pidlist,task,debug=False):
         pid = 0
         if pidlist:
@@ -104,8 +65,8 @@ class pidWatcher(object):
             inrange = False
 
             if debug and str(self.pidList[i]) == str(pid): print 'pid', pid, 'task', task, 'pidlist', self.pidList[i], 'state list', self.stateList[i], 'task List', self.taskList[i], 'in range',inrange or self.taskList[i]==-1
-
-            if str(self.pidList[i]) == str(pid) and (inrange or self.taskList[i]==-1):
+            if '.' not in str(self.pidList[i]): self.pidList[i]= self.pidList[i]+'.0' 
+            if str(self.pidList[i]) == str(pid):
                 if str(self.stateList[i]) == '1' or str(self.stateList[i]) =='2' or str(self.stateList[i]) =='4': # 1 idle; 2 running; 4 completed
                     return 1  # in the batch
                 else: 

@@ -15,6 +15,7 @@ import subprocess
 #import multiprocessing
 from Manager import *
 from LumiCalcAutoBuilder import *
+from missing_files_runner import *
 
 def SFrameBatchMain(input_options):
     parser = OptionParser(usage="usage: %prog [options] filename",
@@ -91,6 +92,11 @@ def SFrameBatchMain(input_options):
                       dest="FileSplitFileCheck",
                       help="Force to remove empty files in FileSplit mode. This is only necessary after a Selection where there many Files with no entries at all or only very few. This might lead to sframe crashing."
                       )
+    parser.add_option("-n", "--numberWorker",
+                      action="store",
+                      dest="numberOfWorker",
+                      default="1",
+                      help="Specify how many workers you want to have. Usefull at the moment to run missing_files.txt in parallel on one machine.")
     parser.add_option("--XMLDatabase",
                       action="store",
                       dest="xmldatabaseDir",
@@ -102,6 +108,17 @@ def SFrameBatchMain(input_options):
     
     start = timeit.default_timer()
 
+    if 'missing_files.txt' in args[0]:
+        filename = args[0]
+        currentDir = os.getcwd()
+        if "/" in filename:
+            directory = filename.replace("missing_files.txt",'')
+            os.chdir(directory)
+        run_missing_files('missing_files.txt', int(options.numberOfWorker))
+        os.chdir(currentDir)
+        return 0
+
+        
     #global header
     if len(args) != 1:
         parser.error("wrong number of arguments. Help can be invoked with --help")
