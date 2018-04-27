@@ -10,70 +10,88 @@ from tree_checker import *
 
 
 def write_script(name,workdir,header):
-    myfile = open(workdir+'/split_script_'+name+'.sh','w')
-    
-    myfile.write(
-    """#!/bin/bash
-
-##This is a simple example of a SGE batch script
-##Use home server with scientific linux 6 
-#$ -l os=sld6 
-#$ -l site=hh 
-#$ -cwd
-##You need to set up sframe
-#$ -V 
-##email Notification
-#$ -m """+header.Notification+"""
-#$ -M """+header.Mail+"""
-##running in local mode with 8-12 cpu slots
-##$ -pe local 8-12
-## running time, normaly 3h should be enough
-#$ -l h_rt=03:00:00
-##CPU memory
-#$ -l h_vmem="""+header.RAM+"""G
-##DISK memory
-#$ -l h_fsize="""+header.DISK+"""G   
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"""+os.environ.get('LD_LIBRARY_PATH')+"""
-export LD_LIBRARY_PATH
-cd """+workdir+"""
-sframe_main """+name+"""_${SGE_TASK_ID}.xml
+    sframe_wrapper=open(workdir+'/sframe_wrapper.sh','w')
+    sframe_wrapper.write(
+        """#!/bin/bash
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_STORED
+sframe_main $1
+        """)
+    sframe_wrapper.close()
+    os.system('chmod u+x '+workdir+'/sframe_wrapper.sh')    
+    if (header.Notification == 'as'):
+        condor_notification = 'Error'
+    elif (header.Notification == 'n'):
+        condor_notification = 'Never'
+    elif (header.Notification == 'e'):
+        condor_notification = 'Complete'
+    else:
+        condor_notification = ''
+        
+    submit_file = open(workdir+'/CondorSubmitfile_'+name+'.submit','w')
+    submit_file.write(
+        """#HTC Submission File for SFrameBatch
+# +MyProject        =  "af-cms" 
+requirements      =  OpSysAndVer == "SL6"
+universe          = vanilla
+# #Running in local mode with 8 cpu slots
+# universe          =  local
+# request_cpus      =  8 
+notification      = """+condor_notification+"""
+notify_user       = """+header.Mail+"""
+initialdir        = """+workdir+"""
+output            = $(Stream)/"""+name+""".o$(ClusterId).$(Process)
+error             = $(Stream)/"""+name+""".e$(ClusterId).$(Process)
+log               = $(Stream)/"""+name+""".$(Cluster).log
+#Requesting CPU and DISK Memory - default +RequestRuntime of 3h stays unaltered
+RequestMemory     = """+header.RAM+"""G
+RequestDisk       = """+header.DISK+"""G
+#You need to set up sframe
+getenv            = True
+environment       = "LD_LIBRARY_PATH_STORED="""+os.environ.get('LD_LIBRARY_PATH')+""""
+executable        = """+workdir+"""/sframe_wrapper.sh
+MyIndex           = $(Process) + 1
+fileindex         = $INT(MyIndex,%d)
+arguments         = """+name+"""_$(fileindex).xml
 """)
-    
-    myfile.close()
-
-
-def resub_script(name,workdir,header):
-    myfile = open(workdir+'/split_script_'+name+'.sh','w')
-    
-    myfile.write(
-    """#!/bin/bash
-
-##This is a simple example of a SGE batch script
-##Use home server with scientific linux 6 
-#$ -l os=sld6 
-#$ -l site=hh 
-#$ -cwd
-##You need to set up sframe
-#$ -V 
-##email Notification
-#$ -m """+header.Notification+"""
-#$ -M """+header.Mail+"""
-##running in local mode with 8-12 cpu slots
-##$ -pe local 8-12
-## running time, normaly 3h should be enough
-#$ -l h_rt=03:00:00
-##CPU memory
-##$ -l h_vmem="""+header.RAM+"""G
-#$ -l h_vmem=8G
-##DISK memory
-#$ -l h_fsize="""+header.DISK+"""G 
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"""+os.environ.get('LD_LIBRARY_PATH')+"""
-export LD_LIBRARY_PATH
-cd """+workdir+"""
-sframe_main """+name+""".xml
-
-""")    
-    myfile.close()
+    submit_file.close()
+        
+def resub_script(name,workdir,header):    
+    if (header.Notification == 'as'):
+        condor_notification = 'Error'
+    elif (header.Notification == 'n'):
+        condor_notification = 'Never'
+    elif (header.Notification == 'e'):
+        condor_notification = 'Complete'
+    else:
+        condor_notification = ''
+        
+    submitfile = open(workdir+'/CondorSubmitfile_'+name+'.submit','w')
+    submitfile.write(
+"""#HTC Submission File for SFrameBatch
+# +MyProject        =  "af-cms" 
+requirements      =  OpSysAndVer == "SL6"
+universe          = vanilla
+# #Running in local mode with 8 cpu slots
+# universe          =  local
+# request_cpus      =  8 
+notification      = """+condor_notification+"""
+notify_user       = """+header.Mail+"""
+initialdir        = """+workdir+"""
+output            = $(Stream)/"""+name+""".o$(ClusterId).$(Process)
+error             = $(Stream)/"""+name+""".e$(ClusterId).$(Process)
+log               = $(Stream)/"""+name+""".$(Cluster).log
+#Requesting CPU and DISK Memory - default +RequestRuntime of 3h stays unaltered
+# RequestMemory     = """+header.RAM+"""G
+RequestMemory     = 8G
+RequestDisk       = """+header.DISK+"""G
+#You need to set up sframe
+getenv            = True
+environment       = "LD_LIBRARY_PATH_STORED="""+os.environ.get('LD_LIBRARY_PATH')+""""
+executable        = """+workdir+"""/sframe_wrapper.sh
+arguments         = """+name+""".xml
+queue
+""")
+    submitfile.close()
 
 def submit_qsub(NFiles,Stream,name,workdir):
     #print '-t 1-'+str(int(NFiles))
@@ -84,8 +102,10 @@ def submit_qsub(NFiles,Stream,name,workdir):
         print Stream+' has been created'
  
     #call(['qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
-    proc_qstat = Popen(['condor_qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
-    return (proc_qstat.communicate()[0].split()[2]).split('.')[0]
+    # proc_qstat = Popen(['condor_qsub'+' -t 1-'+str(NFiles)+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
+    # return (proc_qstat.communicate()[0].split()[2]).split('.')[0]
+    proc_qstat = Popen(['condor_submit'+' '+workdir+'/CondorSubmitfile_'+name+'.submit'+' -a "Stream='+Stream.split('/')[1]+'" -a "queue '+str(NFiles)+'"'],shell=True,stdout=PIPE)
+    return (proc_qstat.communicate()[0].split()[7]).split('.')[0]
 
 
 def resubmit(Stream,name,workdir,header):
@@ -95,8 +115,10 @@ def resubmit(Stream,name,workdir,header):
         os.makedirs(Stream)
         print Stream+' has been created'
     #call(['qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'], shell=True)
-    proc_qstat = Popen(['condor_qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
-    return proc_qstat.communicate()[0].split()[2]
+    # proc_qstat = Popen(['condor_qsub'+' -o '+Stream+'/'+' -e '+Stream+'/'+' '+workdir+'/split_script_'+name+'.sh'],shell=True,stdout=PIPE)
+    # return proc_qstat.communicate()[0].split()[2]
+    proc_qstat = Popen(['condor_submit'+' '+workdir+'/CondorSubmitfile_'+name+'.submit'+' -a "Stream='+Stream.split('/')[1]+'"'],shell=True,stdout=PIPE)
+    return (proc_qstat.communicate()[0].split()[7]).split('.')[0]
 
 def add_histos(directory,name,NFiles,workdir,outputTree, onlyhists,outputdir):
     if not os.path.exists(outputdir):
