@@ -15,6 +15,8 @@ import time
 import ROOT
 import copy
 
+ROOT.PyConfig.IgnoreCommandLineOptions = True
+
 #my classes
 from Inf_Classes import *
 from batch_classes import *
