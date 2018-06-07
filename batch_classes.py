@@ -48,6 +48,7 @@ RequestDisk       = """+header.DISK+"""G
 #You need to set up sframe
 getenv            = True
 environment       = "LD_LIBRARY_PATH_STORED="""+os.environ.get('LD_LIBRARY_PATH')+""""
+JobBatchName      = """+name+"""
 executable        = """+workdir+"""/sframe_wrapper.sh
 MyIndex           = $(Process) + 1
 fileindex         = $INT(MyIndex,%d)
@@ -87,6 +88,7 @@ RequestDisk       = """+header.DISK+"""G
 #You need to set up sframe
 getenv            = True
 environment       = "LD_LIBRARY_PATH_STORED="""+os.environ.get('LD_LIBRARY_PATH')+""""
+JobBatchName      = """+name+"""
 executable        = """+workdir+"""/sframe_wrapper.sh
 arguments         = """+name+""".xml
 queue
